@@ -1,5 +1,22 @@
 # mosobr-ai
 
+## Requirements
+
+- Docker Desktop
+- Ollama
+- Python 3.11+ (optional for local run)
+
+## Quick Start
+
+```powershell
+docker compose up --build
+```
+
+После запуска:
+
+- API: http://localhost:8000/docs
+- Demo chat: http://localhost:8000/api/demo
+
 ## Docker
 
 Перед запуском проверь `.env`: токены не попадают в образ, но используются compose как runtime-переменные.
