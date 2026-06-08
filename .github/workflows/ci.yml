@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    env:
+      APP_NAME: MosObr AI
+      APP_ENV: ci
+      OLLAMA_HOST: http://localhost:11434
+      OLLAMA_MODEL: qwen2.5:7b
+      EMBEDDING_MODEL: BAAI/bge-m3
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: mosobr_ai
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      DATA_PATH: ./data/colleges.json
+      FAQ_DATA_PATH: ./data/faq_admission.json
+      API_LOGS_ENABLED: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install ruff
+
+      - name: Ruff critical checks
+        run: ruff check . --select E9,F63,F7,F82
+
+      - name: Unit tests
+        run: python -m unittest discover -s tests
+
+      - name: Docker build
+        run: docker build .

@@ -220,10 +220,15 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 def main() -> None:
+    logger.info("Telegram bot bootstrap started")
     token = load_bot_token()
+    logger.info("Telegram bot token loaded")
 
     application = ApplicationBuilder().token(token).build()
+    logger.info("Telegram application built")
+
     application.bot_data["chat_adapter"] = TelegramChatAdapter()
+    logger.info("Telegram chat adapter initialized")
 
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))

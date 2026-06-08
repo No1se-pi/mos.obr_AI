@@ -186,6 +186,8 @@ class TelegramChatAdapter:
         text = text.replace("# ", "")
         text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
         text = re.sub(r"__(.+?)__", r"\1", text)
+        text = re.sub(r"<(https?://[^>\s]+)>", r"\1", text)
+        text = re.sub(r"https?://\S*\.\.\.", "", text)
         return text.strip()
 
     def _linkify_urls(self, escaped_text: str) -> str:

@@ -60,7 +60,12 @@ FAQ_TERMS = {
     "овз",
     "инвалид",
     "отсрочка",
+    "отсроч",
+    "отстроч",
     "армия",
+    "арм",
+    "призыв",
+    "военком",
     "егэ",
     "огэ",
     "гвэ",
@@ -104,7 +109,12 @@ RECOMMEND_TERMS = {
     "куда",
     "где учиться",
     "какие колледжи",
+    "какие колледжи готовят",
+    "какие колледжи к этому готовят",
+    "какие колледжи к этому",
     "колледжи есть",
+    "подбери колледж",
+    "подбери колледжи",
     "на кого",
     "логистика",
     "актер",
@@ -165,6 +175,71 @@ OUT_OF_SCOPE_TERMS = {
     "теорема", "теорему", "лагранжа", "рецепт", "вкусного кофе", "шутку", "мем",
     "напиши алгоритм", "бинарного поиска", "напиши код", "реши задачу", "домашку",
     "стриптиз", "стриптизер",
+}
+
+SAFETY_DIRECT_HARM_TERMS = {
+    "как взломать",
+    "помоги взломать",
+    "взломай",
+    "украсть пароль",
+    "своровать пароль",
+    "обойти защиту",
+    "обойти пароль",
+    "сделать вирус",
+    "написать вирус",
+    "вредоносный код",
+    "ddos",
+    "ддос",
+    "фишинговый сайт",
+    "фишинговую страницу",
+    "подделать документы",
+    "купить диплом",
+    "сделать поддельный диплом",
+    "поджечь",
+    "сделать бомбу",
+    "купить наркотики",
+    "продать наркотики",
+}
+
+SAFETY_DANGEROUS_TOPICS = {
+    "взлом",
+    "пароль",
+    "фишинг",
+    "вирус",
+    "троян",
+    "кейлоггер",
+    "ботнет",
+    "ddos",
+    "ддос",
+    "эксплойт",
+    "уязвимость",
+    "оружие",
+    "бомба",
+    "наркотик",
+    "поддельный документ",
+}
+
+SAFETY_INSTRUCTION_INTENTS = {
+    "как сделать",
+    "как написать",
+    "как создать",
+    "инструкция",
+    "пошагово",
+    "научи",
+    "скрипт",
+    "код для",
+    "команды для",
+    "схема",
+    "способ",
+}
+
+SAFE_CYBER_CAREER_TERMS = {
+    "кибербезопасность",
+    "информационная безопасность",
+    "белый хакер",
+    "этичный хакер",
+    "пентестер",
+    "специалист по информационной безопасности",
 }
 
 
@@ -256,13 +331,14 @@ class DialogRouter:
             "тебе ближе", "какие у тебя есть хобби", "любимые школьные предметы",
             "помогу определиться", "профориента", "люди/педагогика", "творчество/дизайн",
             "какие предметы", "после этого я предложу", "ответь коротко",
+            "я бы смотрел", "подходящие направления", "следующий шаг", "можно подобрать колледжи",
         ]
         return any(marker in text for marker in markers)
 
     def _looks_like_career_guidance_answer(self, q: str) -> bool:
         if self._is_faq(q) or self.extract_college_alias(q):
             return False
-        if any(term in q for term in OUT_OF_SCOPE_TERMS):
+        if any(term in q for term in OUT_OF_SCOPE_TERMS) or self._is_illegal_instruction(q):
             return False
         markers = [
             "матем", "информ", "физ", "литера", "общество", "история", "биология",
@@ -283,6 +359,16 @@ class DialogRouter:
                 needs_retrieval=False,
                 confidence=1.0,
                 reason="gibberish",
+            )
+
+        if self._is_illegal_instruction(q):
+            return RouterDecision(
+                mode="script",
+                normalized_query=user_query,
+                script_type="safety",
+                needs_retrieval=False,
+                confidence=1.0,
+                reason="safety_illegal_instruction",
             )
 
         if any(term in q for term in ABUSE_TERMS):
@@ -317,6 +403,31 @@ class DialogRouter:
                 confidence=0.98,
                 reason="out_of_scope",
             )
+
+        if self._last_assistant_looks_career_guidance(history_messages):
+            if self._is_more_info(q):
+                return RouterDecision(
+                    mode="career_guidance",
+                    normalized_query=user_query,
+                    topic="профориентация",
+                    needs_retrieval=False,
+                    use_history=True,
+                    confidence=0.94,
+                    reason="career_guidance_more_followup",
+                )
+
+            if any(term in q for term in ["колледж", "колледжи", "куда", "где учиться", "что посмотреть"]):
+                last_user = self._last_user_text(history_messages)
+                normalized = f"{last_user}. {user_query}" if last_user else user_query
+                return RouterDecision(
+                    mode="recommend_colleges",
+                    normalized_query=normalized,
+                    topic="профориентация: подбор колледжей по прошлой теме",
+                    needs_retrieval=True,
+                    use_history=True,
+                    confidence=0.92,
+                    reason="career_guidance_to_recommendation",
+                )
 
         # Если пользователь отвечает на профориентационные вопросы, не даём роутеру уронить это в FAQ/случайный retriever.
         if self._last_assistant_looks_career_guidance(history_messages) and self._looks_like_career_guidance_answer(q):
@@ -396,6 +507,16 @@ class DialogRouter:
                 reason="faq_terms",
             )
 
+        if self._is_recommend(q):
+            return RouterDecision(
+                mode="recommend_colleges",
+                normalized_query=user_query,
+                topic=user_query,
+                needs_retrieval=True,
+                confidence=0.86,
+                reason="recommend_terms",
+            )
+
         if self._is_career_guidance(q):
             return RouterDecision(
                 mode="career_guidance",
@@ -405,16 +526,6 @@ class DialogRouter:
                 use_history=True,
                 confidence=0.90,
                 reason="career_guidance",
-            )
-
-        if self._is_recommend(q):
-            return RouterDecision(
-                mode="recommend_colleges",
-                normalized_query=user_query,
-                topic=user_query,
-                needs_retrieval=True,
-                confidence=0.86,
-                reason="recommend_terms",
             )
 
         if self._looks_like_short_reaction(q):
@@ -496,6 +607,9 @@ class DialogRouter:
         q = normalize_text(user_query)
 
         # Не доверяем LLM в критичных кейсах.
+        if self._is_illegal_instruction(q):
+            return RouterDecision("script", user_query, script_type="safety", needs_retrieval=False, confidence=1.0)
+
         if any(term in q for term in ABUSE_TERMS):
             return RouterDecision("script", user_query, script_type="abuse", needs_retrieval=False, confidence=1.0)
 
@@ -575,6 +689,26 @@ class DialogRouter:
     def _history_text(self, history_messages: list) -> str:
         return "\n".join(str(getattr(msg, "content", "")) for msg in history_messages[-8:])
 
+    def _last_user_text(self, history_messages: list) -> str:
+        for msg in reversed(history_messages):
+            if getattr(msg, "role", "") == "user":
+                return str(getattr(msg, "content", "")).strip()
+        return ""
+
+    def _is_safe_cyber_career_query(self, q: str) -> bool:
+        if not any(term in q for term in SAFE_CYBER_CAREER_TERMS):
+            return False
+        return any(term in q for term in ["куда", "где учиться", "колледж", "специальность", "профессия", "стать"])
+
+    def _is_illegal_instruction(self, q: str) -> bool:
+        if any(term in q for term in SAFETY_DIRECT_HARM_TERMS):
+            return True
+        if self._is_safe_cyber_career_query(q):
+            return False
+        has_dangerous_topic = any(term in q for term in SAFETY_DANGEROUS_TOPICS)
+        has_instruction_intent = any(term in q for term in SAFETY_INSTRUCTION_INTENTS)
+        return has_dangerous_topic and has_instruction_intent
+
     def _is_ovz_help_interest(self, q: str) -> bool:
         """ОВЗ как интерес помогать людям — это профориентация, а не FAQ про условия поступления."""
         has_ovz = "овз" in q or "инвалид" in q or "инвалидн" in q
@@ -598,7 +732,7 @@ class DialogRouter:
         return False
 
     def _normalize_faq_query(self, q: str, original: str) -> str:
-        if "арм" in q or "отсроч" in q or "забрать" in q:
+        if "арм" in q or "отсроч" in q or "отстроч" in q or "забрать" in q:
             return "отсрочка от армии при обучении в колледже"
         if "овз" in q or "инвалид" in q:
             return "особенности поступления для лиц с ОВЗ"

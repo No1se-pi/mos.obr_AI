@@ -26,7 +26,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - app_logs:/app/logs
+      - ./logs:/app/logs
       - model_cache:/app/local_cache
     restart: unless-stopped
 
@@ -58,7 +58,7 @@ services:
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
-      - app_logs:/app/logs
+      - ./logs:/app/logs
       - model_cache:/app/local_cache
     restart: unless-stopped
 
@@ -81,5 +81,4 @@ services:
 
 volumes:
   postgres_data:
-  app_logs:
   model_cache:

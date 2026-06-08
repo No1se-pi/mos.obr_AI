@@ -4,24 +4,39 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import os
+import secrets
 import tempfile
+import time
 import zipfile
-from typing import Optional
+from typing import Any, Optional
 
-from fastapi import FastAPI
+import requests
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel, Field
+from sqlalchemy import func, select, text
 
+import app.db.chat_models  # noqa: F401 - registers chat tables
+from app.config import get_settings
 from app.db.session import SessionLocal
+from app.db.repository import Document, create_tables
+from app.db.session import engine
 from app.logger import get_logger
 from app.services.chat_service import ChatService
+from app.services.web_transcript_store import WebTranscriptStore
 
 logger = get_logger(__name__)
+settings = get_settings()
 
 SESSION_TTL_MINUTES = 30
 DEMO_HTML_PATH = Path(__file__).with_name("demo_chat.html")
 LOGS_DIR = Path(os.getenv("LOGS_DIR", "/app/logs"))
+API_WAIT_FOR_DOCUMENTS = os.getenv("API_WAIT_FOR_DOCUMENTS", "1").strip().lower() not in {"0", "false", "no", "off"}
+OLLAMA_HEALTH_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_HEALTH_TIMEOUT_SECONDS", "2"))
+
+TRUE_VALUES = {"1", "true", "yes", "on"}
+FALSE_VALUES = {"0", "false", "no", "off"}
 
 app = FastAPI(
     title="MosObr AI API",
@@ -38,6 +53,123 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+def startup() -> None:
+    wait_for_database()
+    create_tables(engine)
+    if API_WAIT_FOR_DOCUMENTS:
+        wait_for_documents()
+
+
+def wait_for_database() -> None:
+    attempts = int(os.getenv("DB_WAIT_ATTEMPTS", "60"))
+    delay = float(os.getenv("DB_WAIT_DELAY", "2"))
+
+    for attempt in range(1, attempts + 1):
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            logger.info("[API] Database is ready")
+            return
+        except Exception as exc:
+            logger.warning("[API] Database is not ready yet (%s/%s): %s", attempt, attempts, exc)
+            time.sleep(delay)
+
+    raise RuntimeError("Database did not become ready in time")
+
+
+def get_document_counts() -> dict[str, int]:
+    db = SessionLocal()
+    try:
+        total = int(db.scalar(select(func.count()).select_from(Document)) or 0)
+        faq = int(db.scalar(select(func.count()).select_from(Document).where(Document.doc_type == "faq")) or 0)
+        college = int(db.scalar(select(func.count()).select_from(Document).where(Document.doc_type == "college")) or 0)
+        specialty = int(db.scalar(select(func.count()).select_from(Document).where(Document.doc_type == "specialty")) or 0)
+        return {
+            "total": total,
+            "faq": faq,
+            "college": college,
+            "specialty": specialty,
+        }
+    finally:
+        db.close()
+
+
+def check_database_ready() -> bool:
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return True
+    except Exception as exc:
+        logger.warning("[API] Health database check failed: %s", exc)
+        return False
+
+
+def documents_ready(counts: dict[str, int]) -> bool:
+    return counts["faq"] > 0 and counts["college"] > 0 and counts["specialty"] > 0
+
+
+def check_ollama_ready() -> bool:
+    try:
+        url = f"{settings.ollama_host.rstrip('/')}/api/tags"
+        response = requests.get(url, timeout=OLLAMA_HEALTH_TIMEOUT_SECONDS)
+        response.raise_for_status()
+        return True
+    except Exception as exc:
+        logger.info("[API] Ollama health check failed: %s", exc)
+        return False
+
+
+def wait_for_documents() -> None:
+    attempts = int(os.getenv("API_DOCUMENT_WAIT_ATTEMPTS", "180"))
+    delay = float(os.getenv("API_DOCUMENT_WAIT_DELAY", "2"))
+
+    for attempt in range(1, attempts + 1):
+        counts = get_document_counts()
+        if counts["faq"] > 0 and counts["college"] > 0 and counts["specialty"] > 0:
+            logger.info("[API] Documents are ready: %s", counts)
+            return
+        logger.warning("[API] Documents are not ready yet (%s/%s): %s", attempt, attempts, counts)
+        time.sleep(delay)
+
+    raise RuntimeError("Documents did not become ready in time")
+
+
+def env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+
+    normalized = value.strip().lower()
+    if normalized in TRUE_VALUES:
+        return True
+    if normalized in FALSE_VALUES:
+        return False
+    return default
+
+
+def api_logs_enabled() -> bool:
+    return env_flag("API_LOGS_ENABLED", default=False)
+
+
+def api_logs_token() -> str:
+    return os.getenv("API_LOGS_TOKEN", "").strip()
+
+
+def require_logs_access(authorization: str | None = Header(default=None)) -> None:
+    # Логи могут содержать реальные пользовательские сообщения, поэтому API-доступ закрыт по умолчанию.
+    if not api_logs_enabled():
+        raise HTTPException(status_code=403, detail="API logs are disabled")
+
+    expected_token = api_logs_token()
+    if not expected_token:
+        return
+
+    expected_header = f"Bearer {expected_token}"
+    if not authorization or not secrets.compare_digest(authorization, expected_header):
+        raise HTTPException(status_code=403, detail="Invalid API logs token")
+
+
 @dataclass(slots=True)
 class ApiSessionState:
     session_id: str | None
@@ -46,6 +178,7 @@ class ApiSessionState:
 
 site_sessions: dict[str, ApiSessionState] = {}
 _chat_service: ChatService | None = None
+_web_transcripts: WebTranscriptStore | None = None
 
 
 def get_chat_service() -> ChatService:
@@ -54,6 +187,35 @@ def get_chat_service() -> ChatService:
         logger.info("[API] Инициализация ChatService")
         _chat_service = ChatService()
     return _chat_service
+
+
+def get_web_transcripts() -> WebTranscriptStore:
+    global _web_transcripts
+    if _web_transcripts is None:
+        _web_transcripts = WebTranscriptStore(LOGS_DIR / "web_sessions")
+    return _web_transcripts
+
+
+def append_web_event(
+    *,
+    site_user_id: str,
+    session_id: str | None,
+    role: str,
+    text: str,
+    mode: str | None = None,
+    extra: dict[str, Any] | None = None,
+) -> None:
+    try:
+        get_web_transcripts().append_event(
+            site_user_id=site_user_id,
+            session_id=session_id,
+            role=role,
+            text=text,
+            mode=mode,
+            extra=extra,
+        )
+    except Exception as exc:
+        logger.warning("[API] Не удалось записать web transcript: %s", exc)
 
 
 def now_utc() -> datetime:
@@ -113,12 +275,37 @@ class SessionResponse(BaseModel):
 
 
 @app.get("/api/health")
-def health() -> dict[str, str | int]:
+def health() -> dict[str, str | int | bool]:
+    database_ready = check_database_ready()
+    try:
+        counts = get_document_counts() if database_ready else {"total": -1, "faq": -1, "college": -1, "specialty": -1}
+    except Exception:
+        counts = {"total": -1, "faq": -1, "college": -1, "specialty": -1}
+        database_ready = False
+
+    docs_ready = documents_ready(counts)
+    ollama_ready = check_ollama_ready()
+
     return {
         "status": "ok",
         "service": "mosobr-ai-api",
+        "database_ready": database_ready,
+        "documents_ready": docs_ready,
+        "rag_ready": database_ready and docs_ready,
+        "ollama_ready": ollama_ready,
+        "ollama_model": settings.ollama_model,
         "active_site_sessions": len(site_sessions),
         "session_ttl_minutes": SESSION_TTL_MINUTES,
+        "logs_dir": str(LOGS_DIR),
+        "logs_dir_exists": int(LOGS_DIR.exists()),
+        "web_logs_dir": str(LOGS_DIR / "web_sessions"),
+        "web_logs_dir_exists": int((LOGS_DIR / "web_sessions").exists()),
+        "api_logs_enabled": api_logs_enabled(),
+        "api_logs_token_required": bool(api_logs_token()),
+        "documents_total": counts["total"],
+        "documents_faq": counts["faq"],
+        "documents_college": counts["college"],
+        "documents_specialty": counts["specialty"],
     }
 
 
@@ -136,42 +323,91 @@ def chat(request: ChatRequest) -> ChatResponse:
         expired,
         message[:200],
     )
+    append_web_event(
+        site_user_id=user_id,
+        session_id=session_id,
+        role="user",
+        text=message,
+        extra={
+            "incoming_session_id": request.session_id,
+            "expired_previous_session": expired,
+        },
+    )
 
-    db = SessionLocal()
     try:
-        result = get_chat_service().ask(
-            db=db,
-            user_id=f"site:{user_id}",
-            user_query=message,
+        db = SessionLocal()
+        try:
+            result = get_chat_service().ask(
+                db=db,
+                user_id=f"site:{user_id}",
+                user_query=message,
+                session_id=session_id,
+                top_k=5,
+            )
+        finally:
+            db.close()
+    except Exception as exc:
+        append_web_event(
+            site_user_id=user_id,
             session_id=session_id,
-            top_k=5,
+            role="system",
+            text=f"ERROR: {exc}",
+            mode="error",
+            extra={"exception_type": type(exc).__name__},
         )
-    finally:
-        db.close()
+        raise
 
     new_session_id = str(result["session_id"])
+    answer_mode = str(result.get("dialog_mode", "unknown"))
+    answer_text = str(result["answer"])
     site_sessions[user_id] = ApiSessionState(
         session_id=new_session_id,
         last_activity=now_utc(),
     )
+    append_web_event(
+        site_user_id=user_id,
+        session_id=new_session_id,
+        role="assistant",
+        text=answer_text,
+        mode=answer_mode,
+        extra={"expired_previous_session": expired},
+    )
 
     return ChatResponse(
         session_id=new_session_id,
-        mode=str(result.get("dialog_mode", "unknown")),
-        answer=str(result["answer"]),
+        mode=answer_mode,
+        answer=answer_text,
         expired_previous_session=expired,
     )
 
 
 @app.post("/api/session/close", response_model=SessionResponse)
 def close_session(request: SessionRequest) -> SessionResponse:
-    site_sessions.pop(request.user_id.strip(), None)
+    user_id = request.user_id.strip()
+    session_id = request.session_id or (site_sessions.get(user_id).session_id if site_sessions.get(user_id) else None)
+    site_sessions.pop(user_id, None)
+    append_web_event(
+        site_user_id=user_id,
+        session_id=session_id,
+        role="system",
+        text="SESSION_CLOSED_BY_USER",
+        mode="session_close",
+    )
     return SessionResponse(ok=True, message="Сессия закрыта")
 
 
 @app.post("/api/session/reset", response_model=SessionResponse)
 def reset_session(request: SessionRequest) -> SessionResponse:
-    site_sessions.pop(request.user_id.strip(), None)
+    user_id = request.user_id.strip()
+    session_id = site_sessions.get(user_id).session_id if site_sessions.get(user_id) else request.session_id
+    site_sessions.pop(user_id, None)
+    append_web_event(
+        site_user_id=user_id,
+        session_id=session_id,
+        role="system",
+        text="SESSION_RESET_BY_USER",
+        mode="session_reset",
+    )
     return SessionResponse(ok=True, message="Новая сессия будет создана при следующем сообщении")
 
 
@@ -187,7 +423,7 @@ def demo() -> HTMLResponse:
 
 
 @app.get("/api/logs/list")
-def list_logs() -> dict:
+def list_logs(_access: None = Depends(require_logs_access)) -> dict:
     """
     Возвращает список файлов логов, которые доступны внутри контейнера API.
     """
@@ -222,7 +458,7 @@ def list_logs() -> dict:
 
 
 @app.get("/api/logs/download")
-def download_logs() -> FileResponse:
+def download_logs(_access: None = Depends(require_logs_access)) -> FileResponse:
     """
     Упаковывает папку logs в zip и отдаёт файлом.
     Если логов ещё нет, всё равно отдаёт zip с README.txt.

@@ -38,4 +38,4 @@ class OllamaClient:
 
         except Exception as e:
             logger.error(f"Ollama error: {e}")
-            return "Ошибка при обращении к модели"
+            return ""

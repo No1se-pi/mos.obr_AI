@@ -32,29 +32,36 @@ def run_ingest(db: Session) -> None:
     # 4. Embedder
     embedder = Embedder()
 
-    # 5. Чистим таблицу
-    logger.info("Очистка таблицы documents...")
-    db.execute(delete(Document))
-    db.commit()
-    logger.info("Таблица documents очищена")
-
-    # 6. Загружаем документы
+    # 5. Сначала считаем embeddings, не трогая рабочую таблицу.
+    # Так API продолжает видеть старую базу, пока новая версия документов готовится.
     total = len(all_documents)
-
+    prepared_documents: list[Document] = []
     for idx, doc in enumerate(all_documents, start=1):
         embedding = embedder.encode(doc["title"] + "\n" + doc["content"])
 
-        db_doc = Document(
-            doc_type=doc["doc_type"],
-            title=doc["title"],
-            content=doc["content"],
-            metadata_json=doc["metadata_json"],
-            embedding_json=embedding,
+        prepared_documents.append(
+            Document(
+                doc_type=doc["doc_type"],
+                title=doc["title"],
+                content=doc["content"],
+                metadata_json=doc["metadata_json"],
+                embedding_json=embedding,
+            )
         )
-        db.add(db_doc)
 
         if idx % 50 == 0 or idx == total:
-            db.commit()
-            logger.info(f"Загружено документов: {idx}/{total}")
+            logger.info(f"Подготовлено документов: {idx}/{total}")
+
+    # 6. Заменяем документы одной транзакцией. При сбое старая база не исчезает.
+    try:
+        logger.info("Замена документов в БД одной транзакцией...")
+        db.execute(delete(Document))
+        db.add_all(prepared_documents)
+        db.commit()
+        logger.info(f"Загружено документов в БД: {total}")
+    except Exception:
+        db.rollback()
+        logger.exception("Ingest failed; transaction rolled back")
+        raise
 
     logger.info("Ingest pipeline завершён")
