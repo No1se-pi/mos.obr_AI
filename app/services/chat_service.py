@@ -12,6 +12,7 @@ from app.rag.retriever import Retriever
 from app.services.session_service import SessionService
 from app.llm.ollama_client import OllamaClient
 from app.services.dialog_router import DialogRouter, RouterDecision
+from app.services.reference_catalog import ReferenceCatalog
 
 logger = get_logger(__name__)
 
@@ -224,6 +225,33 @@ PEDAGOGY_HINTS = {
     "испо",
 }
 
+CONTACT_HINTS = {
+    "контакт",
+    "контакты",
+    "телефон",
+    "номер",
+    "почта",
+    "email",
+    "e-mail",
+    "сайт",
+    "адрес сайта",
+    "приемная",
+    "приёмная",
+    "vk",
+    "тг",
+    "telegram",
+}
+
+INDUSTRY_PROFESSION_HINTS = {
+    "какие профессии",
+    "профессии в",
+    "профессии по",
+    "профессии отрасли",
+    "отрасль",
+    "кем можно работать",
+    "кем работают",
+}
+
 KNOWN_COLLEGE_ALIASES = {
     "каит 20": "Колледж автоматизации и информационных технологий № 20",
     "кaит 20": "Колледж автоматизации и информационных технологий № 20",
@@ -278,6 +306,7 @@ class ChatService:
         self.session_service = session_service or SessionService()
         self.llm_client = llm_client or OllamaClient()
         self.dialog_router = DialogRouter(llm_client=self.llm_client)
+        self.reference_catalog = ReferenceCatalog()
 
     def normalize_text(self, text: str) -> str:
         text = text.lower().strip()
@@ -337,6 +366,23 @@ class ChatService:
         has_college_hint = "колледж" in q or "такой" in q or "он" in q
         has_existence_hint = any(marker in q for marker in ["точно есть", "существует", "реально есть", "правда есть"])
         return has_college_hint and has_existence_hint
+
+    def get_reference_catalog(self) -> ReferenceCatalog:
+        catalog = getattr(self, "reference_catalog", None)
+        if catalog is None:
+            catalog = ReferenceCatalog()
+            self.reference_catalog = catalog
+        return catalog
+
+    def is_contact_query(self, user_query: str) -> bool:
+        q = self.normalize_text(user_query).replace("ё", "е")
+        return any(marker in q for marker in CONTACT_HINTS)
+
+    def is_industry_professions_query(self, user_query: str) -> bool:
+        q = self.normalize_text(user_query).replace("ё", "е")
+        if not any(marker in q for marker in INDUSTRY_PROFESSION_HINTS):
+            return False
+        return self.get_reference_catalog().match_industry(user_query) is not None
 
 
     def is_abusive_without_task(self, user_query: str) -> bool:
@@ -522,6 +568,197 @@ class ChatService:
             "Я могу ошибаться со сроком обучения по этому направлению. "
             f"{self.verification_hint()}"
         )
+
+    def render_college_contacts(self, db: Session, college_name: str, user_query: str) -> str:
+        college_card = self.get_college_card_for_name(db, college_name)
+        if not college_card:
+            return (
+                f"По колледжу «{college_name}» я могу ошибаться с контактами. "
+                f"{self.verification_hint()}"
+            )
+
+        display_name = self.extract_college_name(college_card) or college_name
+        metadata = college_card.metadata_json
+        website = str(metadata.get("website") or metadata.get("site") or "").strip()
+        contacts = [str(item).strip() for item in metadata.get("contacts", []) if str(item).strip()]
+        addresses = [str(item).strip() for item in metadata.get("addresses", []) if str(item).strip()]
+
+        q = self.normalize_text(user_query).replace("ё", "е")
+        wants_site = "сайт" in q or "адрес сайта" in q
+        wants_address = "адрес" in q and not wants_site
+        wants_contacts = any(marker in q for marker in ["контакт", "телефон", "номер", "почта", "email", "e-mail", "приемная", "приёмная"])
+        include_all = not (wants_site or wants_address or wants_contacts)
+
+        lines = [f"{display_name}: контакты из моей базы."]
+        if website and (include_all or wants_site or wants_contacts):
+            lines.append(f"Сайт: {website}")
+
+        if contacts and (include_all or wants_contacts):
+            phones = [item for item in contacts if re.search(r"\d", item) and not item.startswith("http") and "@" not in item]
+            emails = [item for item in contacts if "@" in item and not item.startswith("http")]
+            links = [item for item in contacts if item.startswith("http")]
+            other = [item for item in contacts if item not in phones and item not in emails and item not in links]
+
+            if phones:
+                lines.append(f"Телефон: {'; '.join(phones)}")
+            if emails:
+                lines.append(f"Почта: {'; '.join(emails)}")
+            if links:
+                lines.append(f"Соцсети/каналы: {'; '.join(links)}")
+            if other:
+                lines.append(f"Дополнительно: {'; '.join(other)}")
+
+        if addresses and (include_all or wants_address):
+            lines.append("Адреса:")
+            for address in addresses[:6]:
+                lines.append(f"- {address}")
+
+        if len(lines) == 1:
+            lines.append("Точных контактов в моей базе не нашёл.")
+
+        lines.append("")
+        lines.append(self.verification_hint(website or None))
+        return "\n".join(lines)
+
+    def render_industry_professions_from_catalog(self, user_query: str) -> str | None:
+        match = self.get_reference_catalog().match_industry(user_query)
+        if not match or not match.professions:
+            return None
+
+        professions = list(match.professions)
+        if match.key == "medicine":
+            professions.sort(key=self.medicine_profession_priority)
+        professions = professions[:12]
+        lines = [f"В отрасли «{match.title}» в моей базе есть такие профессии:"]
+        for idx, profession in enumerate(professions, start=1):
+            lines.append(f"{idx}. {profession}")
+
+        if len(match.professions) > len(professions):
+            lines.append(f"И ещё {len(match.professions) - len(professions)} профессий в этой отрасли.")
+
+        lines.append("")
+        lines.append("Если хочешь, я могу следующим сообщением подобрать колледжи по одной из этих профессий.")
+        return "\n".join(lines)
+
+    def render_profession_recommendations_from_catalog(
+        self,
+        user_query: str,
+        *,
+        skip_colleges: set[str] | None = None,
+        is_more_request: bool = False,
+    ) -> str | None:
+        matches = self.get_reference_catalog().match_professions(user_query)
+        if not matches:
+            return None
+
+        match = matches[0]
+        skip_colleges = skip_colleges or set()
+        lines: list[str] = []
+        seen_colleges: set[str] = set()
+        added = 0
+
+        for entry in match.colleges:
+            college_name = str(entry.get("college", "")).strip()
+            specialty_name = str(entry.get("specialty", "")).strip()
+            professions = [str(item).strip() for item in entry.get("professions", []) if str(item).strip()]
+            college_key = self.college_key(college_name)
+            if not college_name or not specialty_name or college_key in seen_colleges or college_key in skip_colleges:
+                continue
+
+            if added == 0:
+                if is_more_request:
+                    lines.append(f"Нашёл ещё варианты по профессии «{match.display_name}»:")
+                else:
+                    lines.append(f"По базе вижу такие варианты для профессии «{match.display_name}»:")
+
+            lines.append(f"{added + 1}. {college_name} — {specialty_name}")
+            if professions:
+                lines.append(f"   После обучения: {', '.join(professions[:3])}")
+            website = str(entry.get("website", "")).strip()
+            if website:
+                lines.append(f"   Сайт: {website}")
+
+            seen_colleges.add(college_key)
+            added += 1
+            if added >= 3:
+                break
+
+        if added == 0:
+            if is_more_request:
+                return (
+                    f"Пока не вижу ещё колледжей по профессии «{match.display_name}» среди справочника. "
+                    f"{self.verification_hint()}"
+                )
+            return None
+
+        lines.append("")
+        lines.append("Если хочешь, могу показать ещё варианты или сравнить эти колледжи простыми словами.")
+        return "\n".join(lines)
+
+    def render_industry_college_recommendations_from_catalog(
+        self,
+        user_query: str,
+        *,
+        skip_colleges: set[str] | None = None,
+        is_more_request: bool = False,
+    ) -> str | None:
+        match = self.get_reference_catalog().match_industry(user_query)
+        if not match or not match.college_specialties:
+            return None
+
+        skip_colleges = skip_colleges or set()
+        lines: list[str] = []
+        seen_colleges: set[str] = set()
+        added = 0
+
+        entries = list(match.college_specialties)
+        if match.key == "medicine":
+            entries.sort(key=self.medicine_college_entry_priority)
+
+        for entry in entries:
+            college_name = str(entry.get("college", "")).strip()
+            specialty_name = str(entry.get("specialty", "")).strip()
+            professions = [str(item).strip() for item in entry.get("professions", []) if str(item).strip()]
+            college_key = self.college_key(college_name)
+            if not college_name or not specialty_name or college_key in seen_colleges or college_key in skip_colleges:
+                continue
+
+            if added == 0:
+                if is_more_request:
+                    lines.append(f"Нашёл ещё варианты по отрасли «{match.title}»:")
+                else:
+                    lines.append(f"По отрасли «{match.title}» в базе есть такие варианты:")
+
+            lines.append(f"{added + 1}. {college_name} — {specialty_name}")
+            if professions:
+                lines.append(f"   После обучения: {', '.join(professions[:3])}")
+            website = str(entry.get("website", "")).strip()
+            if website:
+                lines.append(f"   Сайт: {website}")
+
+            seen_colleges.add(college_key)
+            added += 1
+            if added >= 3:
+                break
+
+        if added == 0:
+            return None
+
+        lines.append("")
+        lines.append("Можно выбрать одну профессию из списка, и я покажу колледжи точнее.")
+        return "\n".join(lines)
+
+    def medicine_college_entry_priority(self, entry: dict[str, object]) -> tuple[int, int, str]:
+        college = self.normalize_text(str(entry.get("college", ""))).replace("ё", "е")
+        specialty = self.normalize_text(str(entry.get("specialty", ""))).replace("ё", "е")
+        is_med_college = 0 if "медицинский колледж" in college or "училище сестер" in college else 1
+        is_med_specialty = 0 if any(x in specialty for x in ["сестрин", "стомат", "медицин", "фармац", "лабораторная диагностика"]) else 1
+        return (is_med_college, is_med_specialty, college)
+
+    def medicine_profession_priority(self, profession: str) -> tuple[int, str]:
+        normalized = self.normalize_text(profession).replace("ё", "е")
+        is_core = 0 if any(x in normalized for x in ["медицин", "фельдшер", "фармацевт", "зубной", "оптометрист", "оптик"]) else 1
+        return (is_core, normalized)
 
     def get_colleges_count(self, db: Session) -> int:
         stmt = select(func.count()).select_from(Document).where(Document.doc_type == "college")
@@ -812,35 +1049,117 @@ class ChatService:
         return last_user, seen_colleges
 
     def render_specialty_detail_by_name(self, db: Session, specialty_name: str, college_name: str | None = None) -> str:
-        docs = db.scalars(select(Document).where(Document.doc_type == "specialty")).all()
-        target = self.normalize_text(specialty_name).replace("ё", "е")
-        candidates: list[Document] = []
-        for doc in docs:
-            spec = self.normalize_text(self.extract_specialty_name(doc)).replace("ё", "е")
-            if not spec:
-                continue
-            if target in spec or spec in target:
-                if college_name is None or self.college_name_matches(self.extract_college_name(doc), college_name):
-                    candidates.append(doc)
+        candidates = self.find_specialty_docs_by_query(db, specialty_name, college_name=college_name)
         if not candidates:
             return (
                 f"Я понял, что речь про специальность «{specialty_name}», но могу ошибаться с деталями по ней. "
                 f"{self.verification_hint()}"
             )
         doc = candidates[0]
-        college = self.extract_college_name(doc)
         spec = self.extract_specialty_name(doc)
         professions = doc.metadata_json.get("professions", []) or []
         lines = [f"{spec} — что видно по моей базе:"]
-        if college:
-            lines.append(f"Колледж: {college}")
         if professions:
             lines.append(f"После обучения можно ориентироваться на профессии: {', '.join(str(p) for p in professions[:5])}.")
-        content = re.sub(r"\s+", " ", (doc.content or "")).strip()
-        if content:
-            lines.append(content[:900])
+
+        if college_name:
+            college = self.extract_college_name(doc)
+            if college:
+                lines.append(f"Колледж: {college}")
+            content = re.sub(r"\s+", " ", (doc.content or "")).strip()
+            if content:
+                lines.append(content[:900])
+        else:
+            lines.append("В моей базе эта специальность есть в таких колледжах:")
+            for idx, item in enumerate(candidates[:6], start=1):
+                college = self.extract_college_name(item)
+                website = str(item.metadata_json.get("website", "") or "").strip()
+                line = f"{idx}. {college}"
+                if website:
+                    line += f" — {website}"
+                lines.append(line)
+            if len(candidates) > 6:
+                lines.append(f"И ещё {len(candidates) - 6} вариантов в базе.")
+
         lines.append(self.verification_hint(doc.metadata_json.get("website", "") or None))
         return "\n".join(lines)
+
+    def extract_specialty_topic(self, text: str) -> str:
+        topic = self.normalize_text(text).replace("ё", "е")
+        prefixes = [
+            "расскажи подробнее про",
+            "расскажи подробнее о",
+            "расскажи подробнее об",
+            "расскажи мне об",
+            "расскажи про",
+            "расскажи о",
+            "расскажи об",
+            "подробнее про",
+            "инфа про",
+            "что такое",
+            "что за специальность",
+            "что за",
+        ]
+        for prefix in prefixes:
+            if topic.startswith(prefix):
+                topic = topic[len(prefix):].strip()
+                break
+        topic = re.sub(r"\bспециальность\b", " ", topic)
+        topic = re.sub(r"\s+", " ", topic)
+        return topic.strip()
+
+    def find_specialty_docs_by_query(
+        self,
+        db: Session,
+        text: str,
+        *,
+        college_name: str | None = None,
+    ) -> list[Document]:
+        docs = db.scalars(select(Document).where(Document.doc_type == "specialty")).all()
+        target = self.extract_specialty_topic(text)
+        if not target:
+            return []
+
+        target_tokens = {token for token in target.split() if len(token) >= 3}
+        scored: list[tuple[float, Document]] = []
+        for doc in docs:
+            spec_raw = self.extract_specialty_name(doc)
+            spec = self.normalize_text(spec_raw).replace("ё", "е")
+            if not spec:
+                continue
+            if college_name is not None and not self.college_name_matches(self.extract_college_name(doc), college_name):
+                continue
+
+            score = 0.0
+            if target == spec:
+                score += 10.0
+            elif target in spec or spec in target:
+                score += 8.0
+
+            spec_tokens = {token for token in spec.split() if len(token) >= 3}
+            overlap = target_tokens.intersection(spec_tokens)
+            if overlap:
+                score += len(overlap) / max(len(spec_tokens), 1) * 4.0
+
+            if score >= 3.0:
+                scored.append((score, doc))
+
+        scored.sort(key=lambda item: (-item[0], self.extract_college_name(item[1]).lower()))
+
+        seen: set[tuple[str, str]] = set()
+        result: list[Document] = []
+        for _, doc in scored:
+            key = (self.college_key(self.extract_college_name(doc)), self.normalize_text(self.extract_specialty_name(doc)))
+            if key in seen:
+                continue
+            seen.add(key)
+            result.append(doc)
+        return result
+
+    def render_specialty_detail_by_query(self, db: Session, user_query: str) -> str | None:
+        if not self.find_specialty_docs_by_query(db, user_query):
+            return None
+        return self.render_specialty_detail_by_name(db, self.extract_specialty_topic(user_query))
 
     def get_recent_messages_safe(self, db: Session, session, limit: int = 10):
         try:
@@ -1485,6 +1804,17 @@ class ChatService:
         history = self.compact_history_text(recent_messages, limit=8).lower()
         full = f"{history}\n{q}"
 
+        if any(x in q for x in ["не знаю кем", "не знаю что хочу", "не знаю куда", "помоги выбрать", "профориентация"]):
+            return (
+                "Нормально не знать, кем хочешь быть. Давай начнём с простого выбора, без случайных колледжей.\n\n"
+                "Что тебе ближе сейчас?\n"
+                "1. Люди и помощь — медицина, педагогика, социальная работа.\n"
+                "2. Техника и компьютеры — IT, сети, электроника, инженерия.\n"
+                "3. Творчество — дизайн, фото, медиа, музыка.\n"
+                "4. Организация и документы — право, финансы, логистика, сервис.\n\n"
+                "Ответь 1–2 словами, что больше цепляет, и я предложу направления."
+            )
+
         if any(x in q for x in ["не хочу код", "не хочу программ", "не нравится код", "не хочу только сидеть", "не только сидеть в коде", "без кода"]):
             return (
                 "Тогда не надо упираться именно в разработку. В IT есть направления, где кода меньше, а техники и практических задач больше.\n\n"
@@ -1539,6 +1869,15 @@ class ChatService:
                 )
 
         # Жёсткие профориентационные сценарии без LLM, чтобы не повторять старые шаблоны.
+        if any(x in full for x in ["медицин", "здоров", "биолог", "сестрин"]) and any(x in full for x in ["помощ", "люд", "забот"]):
+            return (
+                "Тут хорошо сходятся два мотива: медицина и помощь людям. Я бы смотрел не один колледж сразу, а 3 близких направления:\n\n"
+                "1. Сестринское дело — если хочется реальной практики, ухода за пациентами и работы в медицине.\n"
+                "2. Лабораторная диагностика / фармация — если интересна медицина, но больше тянет к анализам, препаратам и точной работе.\n"
+                "3. Медицинский массаж или социальная помощь — если важны восстановление, поддержка и работа с людьми.\n\n"
+                "Следующий шаг: могу подобрать колледжи по медицине из базы или отдельно показать профессии в этой отрасли."
+            )
+
         if any(x in full for x in ["дети", "детьм", "ребен", "ребён", "дошколь", "помощ", "овз", "пенсион", "люд", "общаться"]):
             return (
                 "По тому, что ты описываешь, тебе ближе направление ‘люди и помощь’, а не IT.\n\n"
@@ -1666,9 +2005,15 @@ class ChatService:
             answer = self.render_out_of_scope(user_query)
             return self.save_and_return(db, session, user_query, answer, "out_of_scope")
 
+        if self.is_industry_professions_query(user_query):
+            answer = self.render_industry_professions_from_catalog(user_query)
+            if answer:
+                return self.save_and_return(db, session, user_query, answer, "recommend_colleges")
+
         db_college = None
         should_match_college = (
             self.is_detail_query(user_query)
+            or self.is_contact_query(user_query)
             or self.is_all_specialties_request(user_query)
             or self.looks_like_specific_unknown_institution_query(user_query)
         )
@@ -1724,6 +2069,15 @@ class ChatService:
         if requested_college and self.is_all_specialties_request(user_query):
             answer = self.render_all_specialties_for_college(db, requested_college)
             return self.save_and_return(db, session, user_query, answer, "detail_more")
+
+        if requested_college and self.is_contact_query(user_query):
+            answer = self.render_college_contacts(db, requested_college, user_query)
+            return self.save_and_return(db, session, user_query, answer, "detail")
+
+        if not requested_college and self.is_detail_query(user_query):
+            answer = self.render_specialty_detail_by_query(db, user_query)
+            if answer:
+                return self.save_and_return(db, session, user_query, answer, "detail")
 
         # Детерминированный ответ на "третью/вторую специальность" из прошлого списка.
         ordinal = self.extract_ordinal_request(user_query)
@@ -1818,6 +2172,27 @@ class ChatService:
             }
 
         if decision.mode == "recommend_colleges":
+            catalog_query = decision.normalized_query if more_colleges_request else user_query
+            answer = (
+                self.render_profession_recommendations_from_catalog(
+                    catalog_query,
+                    skip_colleges=more_colleges_seen,
+                    is_more_request=more_colleges_request,
+                )
+                or self.render_industry_college_recommendations_from_catalog(
+                    catalog_query,
+                    skip_colleges=more_colleges_seen,
+                    is_more_request=more_colleges_request,
+                )
+            )
+            if answer:
+                self.session_service.add_message(db=db, session=session, role="assistant", content=answer)
+                return {
+                    "session_id": session.session_id,
+                    "answer": answer,
+                    "dialog_mode": "recommend_colleges",
+                }
+
             answer = self.render_recommendation_fallback(
                 documents,
                 user_query,

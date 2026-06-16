@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
@@ -7,6 +9,7 @@ from app.ingest.document_builder import build_all_documents
 from app.ingest.loader_faq import load_faq_json
 from app.ingest.loader_json import load_json_data
 from app.ingest.normalize import normalize_data
+from app.ingest.reference_indexes import write_reference_indexes
 from app.logger import get_logger
 from app.rag.embedder import Embedder
 
@@ -20,6 +23,7 @@ def run_ingest(db: Session) -> None:
     # 1. Основные данные колледжей
     colleges_raw = load_json_data()
     normalized_colleges = normalize_data(colleges_raw)
+    write_reference_indexes(normalized_colleges, Path(settings.data_path).parent)
     college_documents = build_all_documents(normalized_colleges)
 
     # 2. FAQ

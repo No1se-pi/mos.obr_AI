@@ -131,6 +131,55 @@ RECOMMEND_TERMS = {
     "учитель",
 }
 
+FAQ_ADMIN_TERMS = {
+    "документ",
+    "заявление",
+    "срок",
+    "зачисление",
+    "льгот",
+    "овз",
+    "инвалид",
+    "отсроч",
+    "отстроч",
+    "арм",
+    "призыв",
+    "военком",
+    "общежит",
+    "стипенд",
+    "питание",
+    "проезд",
+    "практика",
+    "целевое",
+    "вступитель",
+    "испытан",
+    "экзам",
+    "mos.ru",
+    "мос.ру",
+    "сдавать",
+    "особые условия",
+    "специальные условия",
+    "правила поступ",
+}
+
+DOMAIN_RECOMMEND_TERMS = {
+    "it",
+    "айти",
+    "программирование",
+    "разработка",
+    "информационная безопасность",
+    "кибербезопасность",
+    "медицина",
+    "медицин",
+    "дизайн",
+    "логистика",
+    "туризм",
+    "финансы",
+    "экономика",
+    "строительство",
+    "архитектура",
+    "медиа",
+}
+
 DETAIL_TERMS = {
     "расскажи про",
     "расскажи о",
@@ -196,7 +245,14 @@ SAFETY_DIRECT_HARM_TERMS = {
     "купить диплом",
     "сделать поддельный диплом",
     "поджечь",
+    "рецепт бомбы",
+    "рецепт взрывчат",
     "сделать бомбу",
+    "собрать бомбу",
+    "сделать помбу",
+    "помбу",
+    "взрывчатые вещества",
+    "взрывчатку",
     "купить наркотики",
     "продать наркотики",
 }
@@ -215,6 +271,9 @@ SAFETY_DANGEROUS_TOPICS = {
     "уязвимость",
     "оружие",
     "бомба",
+    "помба",
+    "помбу",
+    "взрывчат",
     "наркотик",
     "поддельный документ",
 }
@@ -225,6 +284,13 @@ SAFETY_INSTRUCTION_INTENTS = {
     "как создать",
     "инструкция",
     "пошагово",
+    "дай",
+    "где учат",
+    "учат делать",
+    "научиться делать",
+    "рецепт",
+    "изготовить",
+    "собрать",
     "научи",
     "скрипт",
     "код для",
@@ -332,6 +398,7 @@ class DialogRouter:
             "помогу определиться", "профориента", "люди/педагогика", "творчество/дизайн",
             "какие предметы", "после этого я предложу", "ответь коротко",
             "я бы смотрел", "подходящие направления", "следующий шаг", "можно подобрать колледжи",
+            "тебе больше нравится", "расскажи немного о себе", "работать с людьми",
         ]
         return any(marker in text for marker in markers)
 
@@ -462,6 +529,16 @@ class DialogRouter:
                 needs_retrieval=True,
                 confidence=0.96,
                 reason="explicit_college",
+            )
+
+        if any(term in q for term in DETAIL_TERMS):
+            return RouterDecision(
+                mode="detail",
+                normalized_query=user_query,
+                topic=user_query,
+                needs_retrieval=True,
+                confidence=0.86,
+                reason="detail_terms",
             )
 
         if self._is_more_info(q):
@@ -719,7 +796,11 @@ class DialogRouter:
     def _is_faq(self, q: str) -> bool:
         if self._is_ovz_help_interest(q):
             return False
+        if any(term in q for term in FAQ_ADMIN_TERMS):
+            return True
         if any(term in q for term in FAQ_TERMS):
+            if self._is_recommend(q):
+                return False
             return True
         if "могут ли забрать" in q and "арм" in q:
             return True
@@ -742,7 +823,24 @@ class DialogRouter:
         return any(term in q for term in CAREER_TERMS)
 
     def _is_recommend(self, q: str) -> bool:
-        return any(term in q for term in RECOMMEND_TERMS)
+        if any(term in q for term in RECOMMEND_TERMS):
+            return True
+        has_domain = any(term in q for term in DOMAIN_RECOMMEND_TERMS)
+        has_intent = any(
+            term in q
+            for term in [
+                "колледж",
+                "колледжи",
+                "учиться",
+                "поступить",
+                "поступать",
+                "посовет",
+                "подбери",
+                "професс",
+                "специальн",
+            ]
+        )
+        return has_domain and has_intent
 
     def _is_more_info(self, q: str) -> bool:
         return any(term in q for term in MORE_TERMS)

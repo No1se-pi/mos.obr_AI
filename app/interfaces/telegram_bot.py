@@ -126,7 +126,7 @@ async def start_dialog_callback(update: Update, context: ContextTypes.DEFAULT_TY
         "Например:\n"
         "• Хочу стать ML-инженером, что посоветуешь?\n"
         "• Какие документы нужны для поступления?\n"
-        "• Расскажи про колледж КАИТ 20",
+        "• Расскажи про колледжи для дизайнеров",
         disable_web_page_preview=True,
     )
 

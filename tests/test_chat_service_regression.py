@@ -22,6 +22,22 @@ class FakeHallucinatingLLM:
         return "Московский колледж экономики имени Ломоносова"
 
 
+class FakeScalarResult:
+    def __init__(self, items):
+        self.items = items
+
+    def all(self):
+        return self.items
+
+
+class FakeDb:
+    def __init__(self, documents):
+        self.documents = documents
+
+    def scalars(self, _stmt):
+        return FakeScalarResult(self.documents)
+
+
 class ChatServiceRegressionTest(unittest.TestCase):
     def setUp(self) -> None:
         self.service = ChatService.__new__(ChatService)
@@ -199,6 +215,81 @@ class ChatServiceRegressionTest(unittest.TestCase):
 
         self.assertIn("Технологический колледж № 21", answer)
         self.assertNotIn("Колледж автоматизации и информационных технологий № 20", answer)
+
+    def test_contact_query_renders_contacts_without_general_overview(self) -> None:
+        doc = Document(
+            doc_type="college",
+            title="КАИТ 20",
+            content="",
+            metadata_json={
+                "college_name": "Колледж автоматизации и информационных технологий № 20",
+                "contacts": ["8 (499) 164-49-30", "priem@kait20.ru", "https://vk.com/kait_20_official"],
+                "website": "https://kait20.mskobr.ru/",
+                "addresses": ["САО, улица Расковой 4"],
+            },
+            embedding_json=[],
+        )
+        self.service.get_college_card_for_name = lambda db, name: doc
+
+        answer = self.service.render_college_contacts(None, "КАИТ 20", "Дай контакты колледжа КАИТ 20")
+
+        self.assertIn("https://kait20.mskobr.ru/", answer)
+        self.assertIn("8 (499) 164-49-30", answer)
+        self.assertIn("priem@kait20.ru", answer)
+        self.assertNotIn("Что здесь можно изучать", answer)
+
+    def test_profession_catalog_recommends_known_colleges(self) -> None:
+        answer = self.service.render_profession_recommendations_from_catalog(
+            "Я хочу поступить на программиста, какие колледжи посоветуешь?"
+        )
+
+        self.assertIsNotNone(answer)
+        self.assertIn("Программист", answer)
+        self.assertIn("ИТ.Москва", answer)
+        self.assertNotIn("Ломоносов", answer)
+
+    def test_industry_catalog_lists_professions(self) -> None:
+        answer = self.service.render_industry_professions_from_catalog("Какие профессии есть в отрасли IT?")
+
+        self.assertIsNotNone(answer)
+        self.assertIn("IT и цифровые технологии", answer)
+        self.assertIn("Программист", answer)
+
+    def test_specialty_detail_query_uses_database_specialty(self) -> None:
+        docs = [
+            Document(
+                doc_type="specialty",
+                title="МК1 — Сестринское дело",
+                content="",
+                metadata_json={
+                    "college_name": "Медицинский колледж № 1",
+                    "specialty_name": "Сестринское дело",
+                    "professions": ["Медицинская сестра", "Медицинский брат"],
+                    "website": "https://medcollege1.mskobr.ru/",
+                },
+                embedding_json=[],
+            ),
+            Document(
+                doc_type="specialty",
+                title="МК2 — Сестринское дело",
+                content="",
+                metadata_json={
+                    "college_name": "Медицинский колледж № 2",
+                    "specialty_name": "Сестринское дело",
+                    "professions": ["Медицинская сестра"],
+                    "website": "https://medcollege2.mskobr.ru/",
+                },
+                embedding_json=[],
+            ),
+        ]
+
+        answer = self.service.render_specialty_detail_by_query(FakeDb(docs), "Расскажи про Сестринское дело")
+
+        self.assertIsNotNone(answer)
+        self.assertIn("Сестринское дело", answer)
+        self.assertIn("Медицинский колледж № 1", answer)
+        self.assertIn("Медицинский колледж № 2", answer)
+        self.assertNotIn("Я на связи", answer)
 
     def test_cleanup_removes_markdown_angle_urls_and_truncated_links(self) -> None:
         text = "**Технологический колледж № 21**\n<https://example.mskobr.ru/>\nСайт: https://1-m..."
