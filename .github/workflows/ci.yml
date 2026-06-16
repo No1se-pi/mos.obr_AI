@@ -46,3 +46,6 @@ jobs:
 
       - name: Docker build
         run: docker build .
+
+      - name: Docker Compose config
+        run: docker compose config --quiet

@@ -111,6 +111,7 @@ def documents_ready(counts: dict[str, int]) -> bool:
 
 def check_ollama_ready() -> bool:
     try:
+        # Health must be cheap: /api/tags checks Ollama without text generation.
         url = f"{settings.ollama_host.rstrip('/')}/api/tags"
         response = requests.get(url, timeout=OLLAMA_HEALTH_TIMEOUT_SECONDS)
         response.raise_for_status()
@@ -124,6 +125,7 @@ def wait_for_documents() -> None:
     attempts = int(os.getenv("API_DOCUMENT_WAIT_ATTEMPTS", "180"))
     delay = float(os.getenv("API_DOCUMENT_WAIT_DELAY", "2"))
 
+    # API can start before ingest finishes, so we wait for all RAG document types.
     for attempt in range(1, attempts + 1):
         counts = get_document_counts()
         if counts["faq"] > 0 and counts["college"] > 0 and counts["specialty"] > 0:

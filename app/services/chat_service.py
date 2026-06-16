@@ -1049,6 +1049,7 @@ class ChatService:
         return last_user, seen_colleges
 
     def render_specialty_detail_by_name(self, db: Session, specialty_name: str, college_name: str | None = None) -> str:
+        # This path answers from DB specialty documents to avoid invented college lists.
         candidates = self.find_specialty_docs_by_query(db, specialty_name, college_name=college_name)
         if not candidates:
             return (
@@ -1120,6 +1121,7 @@ class ChatService:
         if not target:
             return []
 
+        # Token overlap handles user phrasing after removing prefixes like "tell me about".
         target_tokens = {token for token in target.split() if len(token) >= 3}
         scored: list[tuple[float, Document]] = []
         for doc in docs:

@@ -1,91 +1,147 @@
 # Troubleshooting
 
-## Контейнер долго стоит на загрузке embedding-модели
+## Контейнер Долго Запускается
 
-Если видно:
+Если в логах видно:
 
 ```text
 Load pretrained SentenceTransformer: BAAI/bge-m3
 ```
 
-и дальше долго нет логов, значит модель загружается или считаются embeddings.
+это нормально для первого запуска. Модель тяжелая, затем проект считает embeddings.
 
-Что проверить:
+Проверить:
 
-```bash
+```powershell
 docker compose logs -f app
+docker compose logs -f api
 ```
 
-Модель `BAAI/bge-m3` тяжёлая, первый запуск может быть долгим.
+## Бот Или API Не Видят Базу
 
----
+Проверить PostgreSQL:
 
-## Проверить кеш модели
-
-В контейнере:
-
-```bash
-docker compose exec app bash
-du -sh /app/local_cache/*
+```powershell
+docker compose ps
+docker compose logs -f db
 ```
 
-Если `sentence_transformers/models--BAAI--bge-m3` весит около 1GB, модель скачана.
+Проверить health:
 
----
+```text
+http://localhost:8000/api/health
+```
 
-## Проверить Ollama
+Если `documents_ready=false`, документы еще не загружены или ingest не прошел.
 
-На хосте:
+## Ollama Недоступна
 
-```bash
+Признаки:
+- `/api/health` показывает `ollama_ready=false`;
+- ответы могут возвращаться fallback-логикой;
+- в логах есть `Ollama error`.
+
+Проверка на хосте:
+
+```powershell
 ollama list
 ollama run qwen2.5:7b-instruct
 ```
 
-Если Ollama на Windows, в Docker нужно использовать:
+Для Docker Desktop на Windows:
 
 ```env
-OLLAMA_HOST=http://host.docker.internal:11434
+DOCKER_OLLAMA_HOST=http://host.docker.internal:11434
 ```
 
----
+После изменения `.env`:
 
-## API отвечает Not Found
-
-Проверь, что поднят сервис `api`:
-
-```bash
-docker compose ps
+```powershell
+docker compose up -d
 ```
 
-Проверь routes:
+## Telegram-Бот Не Запускается
 
-```bash
-docker compose exec api python -c "from app.interfaces.api import app; print([r.path for r in app.routes])"
+Проверить:
+- в `.env` есть `TELEGRAM_BOT_TOKEN`;
+- токен без пробелов и кавычек;
+- контейнер `app` запущен;
+- Ollama и БД доступны.
+
+Команды:
+
+```powershell
+docker compose logs -f app
+docker compose restart app
 ```
 
----
+Если нужен только API без Telegram, можно временно поставить:
 
-## Логи не скачиваются
+```env
+APP_ENTRYPOINT=cli
+```
 
-Проверь:
+## API Logs Возвращают 403
+
+Это ожидаемо, если debug-логи выключены.
+
+Включить:
+
+```env
+API_LOGS_ENABLED=true
+API_LOGS_TOKEN=secret
+```
+
+Запрос с токеном:
+
+```powershell
+curl -H "Authorization: Bearer secret" http://localhost:8000/api/logs/list
+```
+
+## Ответы Не По Теме
+
+Проверить по логам:
+- какой режим выбрал `DialogRouter`;
+- какие документы нашел `Retriever`;
+- был ли `session_id` передан в следующем web-запросе;
+- не пустая ли база документов;
+- доступна ли Ollama.
+
+Частые причины:
+- запрос похож на FAQ и detail одновременно;
+- пользователь написал follow-up без сохраненного `session_id`;
+- в `data/faq_admission.json` нет нужного ответа;
+- в `data/colleges.json` нет колледжа или специальности.
+
+## Запрос "Расскажи Про Сестринское Дело" Уходит В Общий Ответ
+
+Это значит, что router не распознал специальность или база не загружена.
+
+Проверить:
 
 ```text
-http://localhost:8000/api/logs/list
+http://localhost:8000/api/health
 ```
 
-Если папка пустая, значит сервис API не видит volume с логами.
+Если `documents_specialty=0`, нужно дождаться ingest или пересоздать БД:
 
----
+```powershell
+docker compose down -v
+docker compose up -d
+docker compose logs -f app
+```
 
-## Бот отвечает не по теме
+## pip В venv Не Работает Из-За Кириллицы В Пути
 
-Нужно смотреть логи и проверять:
-- какой режим выбрал router;
-- какие документы вернул retriever;
-- какой prompt ушёл в LLM.
+На Windows иногда ломается launcher у venv, если путь содержит кириллицу.
 
-Чаще всего проблема находится в одном из трёх мест:
-- router выбрал неправильный режим;
-- retriever нашёл нерелевантные документы;
-- LLM добавила лишние обобщения.
+Рабочие варианты:
+- создать проект в пути без кириллицы, например `D:\code\mos.obr_AI`;
+- пересоздать venv;
+- запускать зависимости через Docker;
+- использовать `python -m pip`, а не `pip`.
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```

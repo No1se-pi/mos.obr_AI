@@ -55,6 +55,7 @@ def maybe_run_ingest() -> None:
         logger.info("Skipping ingest because BOOTSTRAP_INGEST=%s", mode)
         return
 
+    # Auto mode avoids rebuilding embeddings on every container restart.
     should_ingest = mode in {"1", "true", "yes", "on", "always"}
     if mode == "auto":
         total_documents = document_count()

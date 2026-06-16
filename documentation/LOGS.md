@@ -1,78 +1,90 @@
 # Логи
 
-Логи нужны для анализа работы бота и поиска ошибок.
+Логи нужны для отладки качества ответов, router, RAG и поведения пользователей.
 
-## Где лежат логи
+## Где Лежат
 
-В проекте используется папка:
+В репозитории:
 
 ```text
 logs/
 ```
 
-В Docker обычно она монтируется внутрь контейнера как:
+В контейнерах:
 
 ```text
 /app/logs
 ```
 
----
+Compose монтирует локальную папку:
 
-## Какие логи есть
-
-Могут быть:
-- технические логи приложения;
-- логи Telegram-сессий;
-- JSONL-логи диалогов;
-- текстовые истории диалогов.
-
----
-
-## Скачать логи через API
-
-Открыть в браузере:
-
-```text
-http://localhost:8000/api/logs/download
+```yaml
+volumes:
+  - ./logs:/app/logs
 ```
 
-Список логов:
+## Какие Логи Есть
 
-```text
-http://localhost:8000/api/logs/list
+- `logs/web_sessions/*.jsonl` - web/API диалоги в машинном формате.
+- `logs/web_sessions/*.txt` - web/API диалоги в удобном текстовом виде.
+- `logs/telegram_sessions/*.jsonl` - Telegram диалоги.
+- `logs/telegram_sessions/*.txt` - Telegram диалоги текстом.
+- обычные stdout/stderr логи контейнеров через `docker compose logs`.
+
+## Защита API-Логов
+
+Ручки логов закрыты по умолчанию:
+
+```env
+API_LOGS_ENABLED=false
 ```
 
----
+Если ручка выключена, API возвращает `403`.
 
-## Скачать логи через PowerShell
+Включить локально:
 
-Если есть скрипт:
+```env
+API_LOGS_ENABLED=true
+API_LOGS_TOKEN=secret
+```
+
+Если `API_LOGS_TOKEN` задан, нужен bearer token:
 
 ```powershell
-.\scripts\export_logs.ps1
+curl -H "Authorization: Bearer secret" http://localhost:8000/api/logs/list
 ```
 
-Или вручную:
+Скачать архив:
 
 ```powershell
-docker cp mosobr_ai-api-1:/app/logs ./exported_logs
+curl -L -H "Authorization: Bearer secret" -o mosobr_ai_logs.zip http://localhost:8000/api/logs/download
 ```
 
-Имя контейнера может отличаться. Посмотреть:
+## Через Docker
+
+Смотреть поток логов:
+
+```powershell
+docker compose logs -f
+docker compose logs -f app
+docker compose logs -f api
+```
+
+Скопировать папку из контейнера, если volume не использовался:
 
 ```powershell
 docker compose ps
+docker cp <container_name>:/app/logs ./exported_logs
 ```
 
----
+## Как Анализировать
 
-## Как использовать логи
+Полезно смотреть:
+- какой `mode` выбрал router;
+- сохранился ли `session_id`;
+- есть ли повторяющиеся ошибки Ollama;
+- какие запросы ушли в fallback;
+- где ответ вышел за границы базы;
+- какие FAQ или aliases нужно добавить.
 
-После тестов на людях полезно смотреть:
-- какие вопросы бот понял неправильно;
-- где потерял контекст;
-- где ушёл в не ту тему;
-- где начал галлюцинировать;
-- какие FAQ нужно добавить.
-
-Логи помогают улучшать router, retriever и prompt-логику.
+Логи могут содержать реальные пользовательские сообщения. Не публикуй их в открытом репозитории.

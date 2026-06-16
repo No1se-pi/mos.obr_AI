@@ -1,6 +1,6 @@
 # API
 
-API сделан на FastAPI и предназначен для подключения сайта или чат-виджета.
+API реализован на FastAPI и нужен для подключения web-чата, демонстрации и технической диагностики.
 
 Базовый адрес локально:
 
@@ -8,33 +8,50 @@ API сделан на FastAPI и предназначен для подключ�
 http://localhost:8000
 ```
 
-Swagger UI:
+Swagger:
 
 ```text
 http://localhost:8000/docs
 ```
 
----
-
 ## GET /api/health
 
-Проверка работоспособности API.
+Показывает состояние API, базы, документов RAG и Ollama. Healthcheck не падает, если Ollama недоступна: API остается живым, а `ollama_ready` будет `false`.
 
-### Пример ответа
+Пример ответа:
 
 ```json
 {
-  "status": "ok"
+  "status": "ok",
+  "service": "mosobr-ai-api",
+  "database_ready": true,
+  "documents_ready": true,
+  "rag_ready": true,
+  "ollama_ready": true,
+  "ollama_model": "qwen2.5:7b-instruct",
+  "active_site_sessions": 1,
+  "session_ttl_minutes": 30,
+  "api_logs_enabled": false,
+  "api_logs_token_required": false,
+  "documents_total": 300,
+  "documents_faq": 63,
+  "documents_college": 68,
+  "documents_specialty": 169
 }
 ```
 
----
+Поля:
+- `database_ready` - API может подключиться к PostgreSQL.
+- `documents_ready` - в базе есть FAQ, колледжи и специальности.
+- `rag_ready` - база и документы готовы для поиска.
+- `ollama_ready` - Ollama отвечает на короткий `/api/tags`.
+- `ollama_model` - модель из `.env`.
 
 ## POST /api/chat
 
-Отправить сообщение в ИИ.
+Отправляет сообщение пользователя в AI-сервис.
 
-### Request
+Request:
 
 ```json
 {
@@ -44,7 +61,7 @@ http://localhost:8000/docs
 }
 ```
 
-### Response
+Response:
 
 ```json
 {
@@ -54,15 +71,13 @@ http://localhost:8000/docs
 }
 ```
 
-`session_id` нужно сохранять на стороне сайта, чтобы продолжать диалог в той же сессии.
-
----
+`session_id` нужно хранить на стороне сайта и передавать в следующих запросах. Так бот понимает уточнения: "подробнее", "давай проще", "а какие еще колледжи?".
 
 ## POST /api/session/close
 
-Закрыть сессию.
+Закрывает web/API-сессию пользователя.
 
-### Request
+Request:
 
 ```json
 {
@@ -71,81 +86,76 @@ http://localhost:8000/docs
 }
 ```
 
-### Response
+Response:
 
 ```json
 {
-  "status": "closed"
+  "ok": true,
+  "message": "Сессия закрыта"
 }
 ```
-
----
 
 ## POST /api/session/reset
 
-Сбросить сессию и начать новую.
+Сбрасывает текущую web/API-сессию. Следующее сообщение создаст новую сессию.
 
-### Request
-
-```json
-{
-  "user_id": "site_user_123"
-}
-```
-
-### Response
+Request:
 
 ```json
 {
-  "status": "reset"
+  "user_id": "site_user_123",
+  "session_id": "uuid"
 }
 ```
 
----
+Response:
+
+```json
+{
+  "ok": true,
+  "message": "Новая сессия будет создана при следующем сообщении"
+}
+```
 
 ## GET /api/demo
 
-Простая HTML-демка чат-окна.
+Открывает HTML-демо web-чата:
 
 ```text
 http://localhost:8000/api/demo
 ```
 
----
-
 ## GET /api/logs/list
 
-Показать список доступных логов.
+Показывает список лог-файлов. Ручка закрыта по умолчанию.
 
-### Response
+Чтобы включить:
 
-```json
-{
-  "logs_dir": "/app/logs",
-  "exists": true,
-  "files": [
-    {
-      "path": "telegram_sessions/123.txt",
-      "size_bytes": 1024
-    }
-  ]
-}
+```env
+API_LOGS_ENABLED=true
+API_LOGS_TOKEN=secret
 ```
 
----
+Если token задан, нужен заголовок:
+
+```text
+Authorization: Bearer secret
+```
+
+Пример:
+
+```powershell
+curl -H "Authorization: Bearer secret" http://localhost:8000/api/logs/list
+```
 
 ## GET /api/logs/download
 
-Скачать все логи zip-архивом.
+Отдает zip-архив с логами. Доступ защищается так же, как `/api/logs/list`.
 
-```text
-http://localhost:8000/api/logs/download
+```powershell
+curl -L -H "Authorization: Bearer secret" -o logs.zip http://localhost:8000/api/logs/download
 ```
 
----
+## TTL Сессий
 
-## TTL сессий
-
-Для web/API-сессий используется TTL. Если пользователь долго не пишет, старая сессия считается устаревшей и может быть заменена новой.
-
-Это нужно, чтобы незакрытые сессии не жили бесконечно.
+Для web/API-сессий используется TTL 30 минут. Если пользователь долго молчит, старая web-сессия считается устаревшей, а следующий запрос может создать новую.

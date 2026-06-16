@@ -1,56 +1,67 @@
-# Чеклист перед загрузкой на GitHub
+# GitHub Checklist
 
-## Проверить, что НЕ загружаем
+## Перед Коммитом
 
-- `.env`
-- `venv/`
-- `local_cache/`
-- `logs/`
-- большие модели
-- приватные токены
-- персональные данные пользователей
+Проверь, что в git не попали:
+- `.env`;
+- `venv/` или `.venv/`;
+- `logs/`;
+- `local_cache/`;
+- дампы базы;
+- токены Telegram;
+- пользовательские диалоги.
 
----
+Команда:
 
-## Проверить, что загружаем
-
-- исходный код `app/`
-- `data/` с демонстрационными JSON
-- `Dockerfile`
-- `docker-compose.yml`
-- `requirements.txt`
-- `.env.example`
-- документацию:
-  - `README.md`
-  - `ARCHITECTURE.md`
-  - `API.md`
-  - `USER_GUIDE.md`
-  - `DEPLOYMENT.md`
-  - `DEMO_SCRIPT.md`
-  - `LOGS.md`
-  - `TROUBLESHOOTING.md`
-
----
-
-## Команды Git
-
-```bash
-git init
-git add .
-git commit -m "Initial project version"
-git branch -M main
-git remote add origin https://github.com/USERNAME/REPOSITORY.git
-git push -u origin main
+```powershell
+git status --short
 ```
 
----
+## Что Должно Быть В Репозитории
 
-## Проверка после загрузки
+- `app/`;
+- `data/`;
+- `tests/`;
+- `documentation/`;
+- `.github/workflows/ci.yml`;
+- `.env.example`;
+- `Dockerfile`;
+- `docker-compose.yml`;
+- `requirements.txt`;
+- `README.md`.
 
-Открыть репозиторий в браузере и проверить:
-- README красиво отображается;
-- нет `.env`;
-- нет `venv`;
-- нет `local_cache`;
-- нет логов пользователей;
-- документация понятна.
+## Локальные Проверки
+
+Если зависимости установлены:
+
+```powershell
+python -m unittest discover -s tests
+ruff check . --select E9,F63,F7,F82
+docker compose config --quiet
+```
+
+Если локальный venv сломан, GitHub Actions все равно прогонит проверки на чистой Ubuntu-виртуалке.
+
+## GitHub Actions
+
+Workflow запускается на:
+- `push`;
+- `pull_request`.
+
+Шаги:
+- checkout;
+- Python 3.11;
+- установка `requirements.txt`;
+- установка `ruff`;
+- critical lint `E9,F63,F7,F82`;
+- `python -m unittest discover -s tests`;
+- `docker build .`;
+- `docker compose config --quiet`.
+
+## После Push
+
+Открой вкладку Actions в GitHub и проверь:
+- workflow зеленый;
+- нет падения unittest;
+- docker build прошел;
+- в логах нет случайно напечатанных секретов.

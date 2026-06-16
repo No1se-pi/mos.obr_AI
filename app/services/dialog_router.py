@@ -531,6 +531,18 @@ class DialogRouter:
                 reason="explicit_college",
             )
 
+        # Administrative FAQ has priority over the broad "tell me about..." detail rule.
+        # Otherwise requests like "tell me about army deferral" are mistaken for specialty details.
+        if self._is_faq(q):
+            return RouterDecision(
+                mode="faq",
+                normalized_query=self._normalize_faq_query(q, user_query),
+                topic="faq",
+                needs_retrieval=True,
+                confidence=0.94,
+                reason="faq_terms_before_detail",
+            )
+
         if any(term in q for term in DETAIL_TERMS):
             return RouterDecision(
                 mode="detail",

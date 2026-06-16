@@ -821,6 +821,7 @@ class Retriever:
         documents = db.scalars(select(Document)).all()
         faq_like = is_faq_like_query(query)
 
+        # Hybrid scoring keeps vector search grounded in aliases and domain rules.
         scored_documents: list[
             tuple[float, float, float, float, float, float, float, float, Document]
         ] = []

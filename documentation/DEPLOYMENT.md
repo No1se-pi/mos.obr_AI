@@ -1,122 +1,148 @@
-# Запуск и развёртывание
+# Деплой И Запуск
 
-## Запуск через Docker
+Проект рассчитан на запуск через Docker Compose. Compose поднимает три сервиса:
+- `db` - PostgreSQL;
+- `api` - FastAPI для сайта и web-демо;
+- `app` - Telegram-бот или CLI, в зависимости от `APP_ENTRYPOINT`.
 
-### 1. Собрать контейнеры
+Ollama по умолчанию запускается отдельно на хосте.
 
-```bash
+## 1. Подготовить Окружение
+
+Нужно установить:
+- Docker Desktop;
+- Ollama;
+- Git;
+- модель Ollama, например `qwen2.5:7b-instruct`.
+
+```powershell
+ollama pull qwen2.5:7b-instruct
+ollama list
+```
+
+## 2. Создать .env
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Минимально проверь:
+
+```env
+OLLAMA_MODEL=qwen2.5:7b-instruct
+TELEGRAM_BOT_TOKEN=your_token
+API_LOGS_ENABLED=false
+```
+
+Для Docker Desktop на Windows compose использует:
+
+```env
+DOCKER_OLLAMA_HOST=http://host.docker.internal:11434
+```
+
+## 3. Собрать Контейнеры
+
+```powershell
 docker compose build
 ```
 
-### 2. Запустить
+После изменения кода:
 
-```bash
-docker compose up -d
-```
-
-### 3. Проверить
-
-```bash
-docker compose ps
-```
-
-### 4. Смотреть логи
-
-```bash
-docker compose logs -f
-```
-
----
-
-## Пересборка после изменений
-
-Если менялся код:
-
-```bash
+```powershell
 docker compose build app api
 docker compose up -d
 ```
 
-Если нужно полностью пересобрать без кеша:
+Полная пересборка без кеша:
 
-```bash
+```powershell
 docker compose build --no-cache app api
 docker compose up -d
 ```
 
----
+## 4. Запустить
 
-## Остановка
-
-```bash
-docker compose down
-```
-
----
-
-## Что делает Dockerfile
-
-`Dockerfile` описывает, как собрать контейнер приложения:
-
-1. берёт Python-образ;
-2. копирует проект;
-3. устанавливает зависимости из `requirements.txt`;
-4. задаёт рабочую папку;
-5. запускает нужную команду.
-
----
-
-## Что делает docker-compose.yml
-
-`docker-compose.yml` запускает несколько сервисов вместе:
-
-- `db` — PostgreSQL;
-- `app` — Telegram-бот / основной сервис;
-- `api` — FastAPI-интерфейс для сайта.
-
-Также compose задаёт:
-- порты;
-- переменные окружения;
-- volumes;
-- зависимости между сервисами.
-
----
-
-## Volumes
-
-Volumes нужны, чтобы данные не пропадали после пересоздания контейнера.
-
-Обычно сохраняются:
-- PostgreSQL data;
-- logs;
-- local_cache.
-
----
-
-## Ollama
-
-Если Ollama запущена на Windows-хосте, внутри Docker нужно обращаться к ней через:
-
-```text
-http://host.docker.internal:11434
-```
-
-В `.env`:
-
-```env
-OLLAMA_HOST=http://host.docker.internal:11434
-```
-
----
-
-## Частые команды
-
-```bash
-docker compose ps
-docker compose logs -f app
-docker compose logs -f api
-docker compose logs -f db
-docker compose restart
-docker compose down
+```powershell
 docker compose up -d
 ```
+
+Проверить:
+
+```powershell
+docker compose ps
+docker compose logs -f api
+```
+
+## 5. Первый Запуск И Ingest
+
+При `BOOTSTRAP_INGEST=auto` сервис `app` проверяет документы в БД. Если документов нет, он запускает загрузку данных и расчет embeddings.
+
+Первый запуск может идти долго из-за:
+- скачивания `BAAI/bge-m3`;
+- расчета embeddings;
+- записи документов в PostgreSQL.
+
+Если база уже заполнена, ingest пропускается.
+
+## 6. Проверить API
+
+```text
+http://localhost:8000/api/health
+http://localhost:8000/docs
+http://localhost:8000/api/demo
+```
+
+В `/api/health` смотри:
+- `database_ready`;
+- `documents_ready`;
+- `rag_ready`;
+- `ollama_ready`;
+- `documents_total`.
+
+## 7. Включить Debug-Логи API
+
+По умолчанию ручки логов закрыты.
+
+Для локальной диагностики:
+
+```env
+API_LOGS_ENABLED=true
+API_LOGS_TOKEN=secret
+```
+
+Перезапуск:
+
+```powershell
+docker compose up -d
+```
+
+Запрос:
+
+```powershell
+curl -H "Authorization: Bearer secret" http://localhost:8000/api/logs/list
+```
+
+## 8. Остановить
+
+```powershell
+docker compose down
+```
+
+Остановить и удалить volume PostgreSQL:
+
+```powershell
+docker compose down -v
+```
+
+`down -v` удалит базу и заставит проект заново делать ingest при следующем запуске.
+
+## 9. Production-Замечания
+
+Перед публичным запуском стоит:
+- не включать `/api/logs/*` без токена;
+- хранить `.env` вне репозитория;
+- поставить reverse proxy и HTTPS;
+- ограничить CORS;
+- добавить Alembic-миграции;
+- перевести embeddings на pgvector;
+- настроить мониторинг и резервные копии PostgreSQL.
