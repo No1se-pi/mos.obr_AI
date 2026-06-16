@@ -238,6 +238,38 @@ class ChatServiceRegressionTest(unittest.TestCase):
         self.assertIn("priem@kait20.ru", answer)
         self.assertNotIn("Что здесь можно изучать", answer)
 
+    def test_address_query_renders_addresses_without_general_overview(self) -> None:
+        doc = Document(
+            doc_type="college",
+            title="КАИТ 20",
+            content="",
+            metadata_json={
+                "college_name": "Колледж автоматизации и информационных технологий № 20",
+                "contacts": ["8 (499) 164-49-30", "priem@kait20.ru"],
+                "website": "https://kait20.mskobr.ru/",
+                "addresses": ["САО, улица Расковой 4"],
+            },
+            embedding_json=[],
+        )
+        self.service.get_college_card_for_name = lambda db, name: doc
+
+        answer = self.service.render_college_contacts(None, "КАИТ 20", "По какому адресу находится КАИТ 20?")
+
+        self.assertIn("Адреса:", answer)
+        self.assertIn("САО, улица Расковой 4", answer)
+        self.assertNotIn("8 (499) 164-49-30", answer)
+        self.assertNotIn("Что здесь можно изучать", answer)
+
+    def test_address_phrases_are_contact_queries(self) -> None:
+        for query in [
+            "какой адрес отделения?",
+            "по какому адресу находится КАИТ 20?",
+            "где расположен колледж Красина?",
+            "как добраться до колледжа связи 54?",
+        ]:
+            with self.subTest(query=query):
+                self.assertTrue(self.service.is_contact_query(query))
+
     def test_profession_catalog_recommends_known_colleges(self) -> None:
         answer = self.service.render_profession_recommendations_from_catalog(
             "Я хочу поступить на программиста, какие колледжи посоветуешь?"

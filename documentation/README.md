@@ -6,6 +6,7 @@
 
 - [API.md](API.md) - HTTP API, healthcheck, chat, logs.
 - [ARCHITECTURE.md](ARCHITECTURE.md) - устройство приложения и поток данных.
+- [PROJECT_MAP.md](PROJECT_MAP.md) - подробная карта всех папок и файлов.
 - [DEPLOYMENT.md](DEPLOYMENT.md) - запуск и деплой через Docker Compose.
 - [LOGS.md](LOGS.md) - где лежат логи и как безопасно их выгружать.
 - [USER_GUIDE.md](USER_GUIDE.md) - как пользоваться ботом и web-демо.

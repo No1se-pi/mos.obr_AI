@@ -119,6 +119,7 @@ curl -H "Authorization: Bearer secret" http://localhost:8000/api/logs/list
 
 - [API](documentation/API.md)
 - [Архитектура](documentation/ARCHITECTURE.md)
+- [Карта проекта](documentation/PROJECT_MAP.md)
 - [Деплой](documentation/DEPLOYMENT.md)
 - [Логи](documentation/LOGS.md)
 - [Сценарий демо](documentation/DEMO_SCRIPT.md)

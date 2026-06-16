@@ -196,12 +196,15 @@ async def text_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         context.user_data["session_id"] = answer.session_id
         context.user_data["last_mode"] = answer.mode
 
-        await message.reply_text(
-            text=answer.text_html,
-            parse_mode=ParseMode.HTML,
-            reply_markup=active_session_keyboard(),
-            disable_web_page_preview=False,
-        )
+        chunks = answer.text_html_chunks or (answer.text_html,)
+        for index, chunk in enumerate(chunks):
+            is_last = index == len(chunks) - 1
+            await message.reply_text(
+                text=chunk,
+                parse_mode=ParseMode.HTML,
+                reply_markup=active_session_keyboard() if is_last else None,
+                disable_web_page_preview=False,
+            )
     finally:
         set_generating(context, False)
 

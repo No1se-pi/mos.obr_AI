@@ -16,6 +16,8 @@ URL_RE = re.compile(r"(?P<url>https?://[^\s<]+)")
 PHONE_RE = re.compile(
     r"(?P<phone>(?:\+7|8)[\s\-]?(?:\(?\d{3}\)?[\s\-]?)\d{3}[\s\-]?\d{2}[\s\-]?\d{2})"
 )
+TELEGRAM_SAFE_TEXT_LIMIT = 3000
+TELEGRAM_SAFE_HTML_LIMIT = 3900
 
 
 @dataclass(slots=True)
@@ -23,6 +25,7 @@ class TgAnswer:
     text_html: str
     mode: str
     session_id: str | None
+    text_html_chunks: tuple[str, ...] = ()
 
 
 class SessionTranscriptStore:
@@ -149,10 +152,12 @@ class TelegramChatAdapter:
             mode=answer_mode,
         )
 
+        chunks = self.format_answer_chunks_html(answer_text)
         return TgAnswer(
-            text_html=self.format_answer_html(answer_text),
+            text_html=chunks[0] if chunks else "",
             mode=answer_mode,
             session_id=new_session_id or None,
+            text_html_chunks=tuple(chunks),
         )
 
     def log_session_closed(
@@ -178,6 +183,113 @@ class TelegramChatAdapter:
         escaped = self._linkify_urls(escaped)
         escaped = self._linkify_phones(escaped)
         return self._format_telegram_html(escaped)
+
+    def format_answer_chunks_html(self, text: str) -> list[str]:
+        chunks: list[str] = []
+        for plain_chunk in self._split_plain_text_for_telegram(text):
+            formatted = self.format_answer_html(plain_chunk)
+            if len(formatted) <= TELEGRAM_SAFE_HTML_LIMIT:
+                chunks.append(formatted)
+                continue
+
+            # Heavy link formatting can make HTML longer than the plain chunk.
+            for smaller_chunk in self._split_plain_text_for_telegram(plain_chunk, max_chars=1500):
+                chunks.append(self.format_answer_html(smaller_chunk))
+
+        return chunks or [self.format_answer_html(text)]
+
+    def _split_plain_text_for_telegram(
+        self,
+        text: str,
+        *,
+        max_chars: int = TELEGRAM_SAFE_TEXT_LIMIT,
+    ) -> list[str]:
+        text = self._cleanup_model_markdown(text)
+        if len(text) <= max_chars:
+            return [text]
+
+        chunks: list[str] = []
+        current: list[str] = []
+        current_len = 0
+
+        for block in self._iter_telegram_blocks(text, max_chars=max_chars):
+            separator_len = 2 if current else 0
+            if current and current_len + separator_len + len(block) > max_chars:
+                chunks.append("\n\n".join(current).strip())
+                current = [block]
+                current_len = len(block)
+                continue
+
+            current.append(block)
+            current_len += separator_len + len(block)
+
+        if current:
+            chunks.append("\n\n".join(current).strip())
+
+        return [chunk for chunk in chunks if chunk]
+
+    def _iter_telegram_blocks(self, text: str, *, max_chars: int) -> list[str]:
+        blocks: list[str] = []
+        for paragraph in re.split(r"\n{2,}", text):
+            paragraph = paragraph.strip()
+            if not paragraph:
+                continue
+            if len(paragraph) <= max_chars:
+                blocks.append(paragraph)
+                continue
+
+            lines = paragraph.splitlines()
+            if len(lines) > 1:
+                blocks.extend(self._split_lines_for_telegram(lines, max_chars=max_chars))
+            else:
+                blocks.extend(self._split_long_line(paragraph, max_chars=max_chars))
+        return blocks
+
+    def _split_lines_for_telegram(self, lines: list[str], *, max_chars: int) -> list[str]:
+        blocks: list[str] = []
+        current: list[str] = []
+        current_len = 0
+
+        for line in lines:
+            line = line.rstrip()
+            if not line:
+                continue
+
+            if len(line) > max_chars:
+                if current:
+                    blocks.append("\n".join(current).strip())
+                    current = []
+                    current_len = 0
+                blocks.extend(self._split_long_line(line, max_chars=max_chars))
+                continue
+
+            separator_len = 1 if current else 0
+            if current and current_len + separator_len + len(line) > max_chars:
+                blocks.append("\n".join(current).strip())
+                current = [line]
+                current_len = len(line)
+                continue
+
+            current.append(line)
+            current_len += separator_len + len(line)
+
+        if current:
+            blocks.append("\n".join(current).strip())
+
+        return blocks
+
+    def _split_long_line(self, line: str, *, max_chars: int) -> list[str]:
+        parts: list[str] = []
+        remaining = line.strip()
+        while len(remaining) > max_chars:
+            cut = remaining.rfind(" ", 0, max_chars)
+            if cut < max_chars // 2:
+                cut = max_chars
+            parts.append(remaining[:cut].strip())
+            remaining = remaining[cut:].strip()
+        if remaining:
+            parts.append(remaining)
+        return parts
 
     def _cleanup_model_markdown(self, text: str) -> str:
         text = text.replace("\r\n", "\n")

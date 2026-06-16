@@ -226,6 +226,9 @@ PEDAGOGY_HINTS = {
 }
 
 CONTACT_HINTS = {
+    "адрес",
+    "адреса",
+    "адресу",
     "контакт",
     "контакты",
     "телефон",
@@ -240,6 +243,23 @@ CONTACT_HINTS = {
     "vk",
     "тг",
     "telegram",
+}
+
+ADDRESS_HINTS = {
+    "адрес",
+    "адреса",
+    "адресу",
+    "адрес отделения",
+    "адрес корпуса",
+    "по какому адресу",
+    "какой адрес",
+    "где находится",
+    "где расположен",
+    "где расположено",
+    "где располагается",
+    "как добраться",
+    "куда ехать",
+    "местонахождение",
 }
 
 INDUSTRY_PROFESSION_HINTS = {
@@ -376,7 +396,11 @@ class ChatService:
 
     def is_contact_query(self, user_query: str) -> bool:
         q = self.normalize_text(user_query).replace("ё", "е")
-        return any(marker in q for marker in CONTACT_HINTS)
+        return any(marker in q for marker in CONTACT_HINTS) or self.is_address_query(user_query)
+
+    def is_address_query(self, user_query: str) -> bool:
+        q = self.normalize_text(user_query).replace("ё", "е")
+        return any(marker in q for marker in ADDRESS_HINTS)
 
     def is_industry_professions_query(self, user_query: str) -> bool:
         q = self.normalize_text(user_query).replace("ё", "е")
@@ -585,7 +609,7 @@ class ChatService:
 
         q = self.normalize_text(user_query).replace("ё", "е")
         wants_site = "сайт" in q or "адрес сайта" in q
-        wants_address = "адрес" in q and not wants_site
+        wants_address = self.is_address_query(user_query) and not wants_site
         wants_contacts = any(marker in q for marker in ["контакт", "телефон", "номер", "почта", "email", "e-mail", "приемная", "приёмная"])
         include_all = not (wants_site or wants_address or wants_contacts)
 
@@ -2066,7 +2090,11 @@ class ChatService:
             db_college
             or self.canonical_college_from_text(user_query)
             or decision.college
-            or (self.find_last_college_in_history(db, previous_messages) if self.is_all_specialties_request(user_query) else None)
+            or (
+                self.find_last_college_in_history(db, previous_messages)
+                if self.is_all_specialties_request(user_query) or self.is_contact_query(user_query)
+                else None
+            )
         )
         if requested_college and self.is_all_specialties_request(user_query):
             answer = self.render_all_specialties_for_college(db, requested_college)
