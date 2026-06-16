@@ -2,7 +2,7 @@ import unittest
 from dataclasses import dataclass
 
 from app.db.repository import Document
-from app.services.chat_service import ATLAS_URL, ChatService
+from app.services.chat_service import ATLAS_URL, COLLEGE_EDUCATION_BLOG_URL, ChatService
 from app.services.dialog_router import RouterDecision
 
 
@@ -338,6 +338,160 @@ class ChatServiceRegressionTest(unittest.TestCase):
         self.assertTrue(self.service.is_college_existence_question("А такой колледж точно есть?"))
         self.assertTrue(self.service.is_college_existence_question("Он реально есть?"))
         self.assertFalse(self.service.is_college_existence_question("Какие колледжи есть?"))
+
+    def test_compact_college_aliases_match_without_spaces(self) -> None:
+        docs = [
+            Document(
+                doc_type="college",
+                title="КП 11",
+                content="",
+                metadata_json={
+                    "college_name": "Колледж предпринимательства № 11",
+                    "aliases": ["КП 11"],
+                },
+                embedding_json=[],
+            )
+        ]
+
+        self.assertEqual(
+            self.service.canonical_college_from_db(FakeDb(docs), "в кп11 учат на ювелира?"),
+            "Колледж предпринимательства № 11",
+        )
+
+    def test_common_faq_answers_frequent_human_wording(self) -> None:
+        answer = self.service.render_common_faq_answer("может ли за меня подать заявление мама")
+        self.assertIsNotNone(answer)
+        self.assertIn("абитуриент", answer)
+        self.assertIn("mos.ru", answer)
+
+        deadline = self.service.render_common_faq_answer("когда последний день подачи заявлений")
+        self.assertIsNotNone(deadline)
+        self.assertIn("26 июля 2026", deadline)
+
+    def test_general_admission_support_catches_human_wording(self) -> None:
+        for query in [
+            "Дай общий номер приёмной компании",
+            "телефон приемной кампании",
+            "куда звонить по поступлению",
+        ]:
+            with self.subTest(query=query):
+                answer = self.service.render_common_faq_answer(query)
+
+                self.assertIsNotNone(answer)
+                self.assertIn("8 495 568 00 88", answer)
+                self.assertIn("Spo@edu.mos.ru", answer)
+
+    def test_soft_faq_wording_for_sensitive_unknowns(self) -> None:
+        svo = self.service.render_common_faq_answer("отец участник сво - какие льготы")
+        self.assertIsNotNone(svo)
+        self.assertIn("В базе нет точного правила", svo)
+        self.assertNotIn("не буду придумывать", svo.lower())
+
+        exams = self.service.render_common_faq_answer("какие ВИ нужно сдавать на разные специальности")
+        self.assertIsNotNone(exams)
+        self.assertIn("В базе нет полного перечня", exams)
+        self.assertNotIn("не буду угадывать", exams.lower())
+
+    def test_priority_and_federal_answers_are_clearer(self) -> None:
+        priority = self.service.render_common_faq_answer("как работает приоритет поступления")
+        self.assertIsNotNone(priority)
+        self.assertIn("1 —", priority)
+        self.assertIn("самый важный", priority)
+
+        federal = self.service.render_common_faq_answer("чем отличается федеральный колледж от колледжа правительства москвы")
+        self.assertIsNotNone(federal)
+        self.assertIn("среднее профессиональное образование", federal)
+        self.assertIn(COLLEGE_EDUCATION_BLOG_URL, federal)
+
+    def test_catalog_recommendation_handles_profession_typos(self) -> None:
+        answer = self.service.render_catalog_recommendation("Какие есть колледжи для поворов?")
+
+        self.assertIsNotNone(answer)
+        self.assertIn("Повар", answer)
+        self.assertNotIn("Я на связи", answer)
+
+    def test_compare_colleges_uses_known_database_colleges(self) -> None:
+        docs = [
+            Document(
+                doc_type="college",
+                title="КС 54",
+                content="",
+                metadata_json={
+                    "college_name": "Колледж связи № 54 имени П.М. Вострухина",
+                    "aliases": ["КС 54"],
+                    "addresses": ["СВАО, тестовый адрес"],
+                    "website": "https://ks54.mskobr.ru/",
+                },
+                embedding_json=[],
+            ),
+            Document(
+                doc_type="specialty",
+                title="КС 54 — Сети",
+                content="",
+                metadata_json={
+                    "college_name": "Колледж связи № 54 имени П.М. Вострухина",
+                    "specialty_name": "Сетевое и системное администрирование",
+                    "professions": ["Системный администратор"],
+                },
+                embedding_json=[],
+            ),
+            Document(
+                doc_type="college",
+                title="ИТ.Москва",
+                content="",
+                metadata_json={
+                    "college_name": "ИТ.Москва",
+                    "aliases": ["ИТ.Москва"],
+                    "addresses": ["ЮАО, тестовый адрес"],
+                    "website": "https://it.mskobr.ru/",
+                },
+                embedding_json=[],
+            ),
+            Document(
+                doc_type="specialty",
+                title="ИТ.Москва — Программист",
+                content="",
+                metadata_json={
+                    "college_name": "ИТ.Москва",
+                    "specialty_name": "Разработка и управление программным обеспечением (Программист)",
+                    "professions": ["Программист"],
+                },
+                embedding_json=[],
+            ),
+        ]
+
+        answer = self.service.render_college_comparison(
+            FakeDb(docs),
+            "сравни кс54 и ит.москва по рейтингу",
+            [],
+        )
+
+        self.assertIn("Колледж связи № 54", answer)
+        self.assertIn("ИТ.Москва", answer)
+        self.assertIn("не буду выдумывать", answer)
+
+    def test_smart_clarification_for_unknown_profession_is_specific(self) -> None:
+        answer = self.service.render_smart_clarification("где учат на кинолога", [])
+
+        self.assertIn("кинолога", answer)
+        self.assertIn(ATLAS_URL, answer)
+        self.assertNotIn("Я на связи", answer)
+
+    def test_detail_followup_asks_number_for_multiple_previous_options(self) -> None:
+        history = [
+            Message(
+                "assistant",
+                "По базе вижу такие варианты:\n"
+                "1. ИТ.Москва — Программист\n"
+                "2. Колледж связи № 54 имени П.М. Вострухина — Сетевое администрирование",
+            )
+        ]
+
+        answer = self.service.render_detail_followup_from_history(FakeDb([]), history)
+
+        self.assertIsNotNone(answer)
+        self.assertIn("Выбери номер", answer)
+        self.assertIn("ИТ.Москва", answer)
 
 
 if __name__ == "__main__":

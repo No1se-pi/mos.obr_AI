@@ -67,6 +67,18 @@ class DialogRouterRegressionTest(unittest.TestCase):
         self.assertEqual(decision.mode, "detail")
         self.assertTrue(decision.needs_retrieval)
 
+    def test_fuzzy_profession_wording_is_recommendation(self) -> None:
+        for query in [
+            "где обучиться на сварщика",
+            "где учат на художник по костюму",
+            "Какие есть колледжи для поворов?",
+        ]:
+            with self.subTest(query=query):
+                decision = self.router.route(query)
+
+                self.assertEqual(decision.mode, "recommend_colleges")
+                self.assertTrue(decision.needs_retrieval)
+
     def test_deferral_forms_are_faq(self) -> None:
         for query in [
             "Расскажи про отсрочку от армии",

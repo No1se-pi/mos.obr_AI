@@ -17,6 +17,10 @@ from app.services.reference_catalog import ReferenceCatalog
 logger = get_logger(__name__)
 
 ATLAS_URL = "https://colleges.shkolamoskva.ru/atlas"
+COLLEGE_EDUCATION_BLOG_URL = "https://colleges.shkolamoskva.ru/blog/kolledzh-jeto-kakoe-obrazovanie"
+GENERAL_ADMISSION_SUPPORT_URL = "https://colleges.shkolamoskva.ru/contacts"
+GENERAL_ADMISSION_SUPPORT_EMAIL = "Spo@edu.mos.ru"
+GENERAL_ADMISSION_SUPPORT_PHONE = "8 495 568 00 88"
 
 LLM_ERROR_MARKERS = {
     "ошибка при обращении к модели",
@@ -93,6 +97,12 @@ FAQ_HINTS = [
     "целевое",
     "вступительные испытания",
     "экзамены",
+    "учебник",
+    "учебники",
+    "дод",
+    "день открытых дверей",
+    "открытых дверей",
+    "приоритет",
 ]
 
 CAREER_HINTS = [
@@ -138,6 +148,11 @@ FOLLOWUP_DETAIL_MARKERS = {
     "расскажи подробнее",
     "давай подробнее",
     "подробней",
+    "расскажи больше",
+    "побольше",
+    "больше деталей",
+    "подробнее про это",
+    "расскажи подробнее про это",
 }
 
 FOLLOWUP_CONFIRM_MARKERS = {
@@ -159,6 +174,9 @@ OTHER_COLLEGE_MARKERS = {
     "какие ещё",
     "покажи еще",
     "покажи ещё",
+    "еще",
+    "ещё",
+    "больше вариантов",
 }
 
 
@@ -262,12 +280,68 @@ ADDRESS_HINTS = {
     "местонахождение",
 }
 
+COMPARISON_HINTS = {
+    "сравни",
+    "сравнить",
+    "сравнение",
+    "чем отличается",
+    "чем отличаются",
+    "кто лучше",
+    "что лучше",
+    "лучше в рейтинге",
+    "рейтинг",
+}
+
+STAFF_HINTS = {
+    "директор",
+    "руководитель",
+    "заведующий",
+    "заместитель",
+    "кто возглавляет",
+}
+
+GENERAL_SUPPORT_HINTS = {
+    "общий номер",
+    "общий телефон",
+    "общие контакты",
+    "общая приемная",
+    "общая приёмная",
+    "номер приемной",
+    "номер приёмной",
+    "телефон приемной",
+    "телефон приёмной",
+    "контакты приемной",
+    "контакты приёмной",
+    "приемная комиссия общая",
+    "приёмная комиссия общая",
+    "приемная кампания",
+    "приёмная кампания",
+    "приемная компания",
+    "приёмная компания",
+    "номер приемной кампании",
+    "номер приёмной кампании",
+    "номер приемной компании",
+    "номер приёмной компании",
+    "информационная поддержка",
+    "поддержка колледжей москвы",
+    "куда звонить",
+    "куда писать",
+}
+
 INDUSTRY_PROFESSION_HINTS = {
     "какие профессии",
     "профессии в",
     "профессии по",
     "профессии отрасли",
     "отрасль",
+    "отрасли",
+    "сфера",
+    "сфере",
+    "перечисли колледжи отрасли",
+    "колледжи отрасли",
+    "креативная индустрия",
+    "здравоохранение",
+    "промышленность",
     "кем можно работать",
     "кем работают",
 }
@@ -294,6 +368,16 @@ KNOWN_COLLEGE_ALIASES = {
     "техникум красина": "Московский техникум креативных индустрий им. Л.Б. Красина",
     "красина": "Московский техникум креативных индустрий им. Л.Б. Красина",
     "мгпи": "МГПУ Институт среднего профессионального образования имени К. Д. Ушинского",
+    "кигм 23": "Колледж индустрии гостеприимства и менеджмента № 23",
+    "кигм23": "Колледж индустрии гостеприимства и менеджмента № 23",
+    "кигим23": "Колледж индустрии гостеприимства и менеджмента № 23",
+    "кп 11": "Колледж предпринимательства № 11",
+    "кп11": "Колледж предпринимательства № 11",
+    "тк 24": "Технологический колледж № 24",
+    "тк24": "Технологический колледж № 24",
+    "тпск максимчука": "Технический пожарно-спасательный колледж имени Героя Российской Федерации В.М. Максимчука",
+    "максимчука": "Технический пожарно-спасательный колледж имени Героя Российской Федерации В.М. Максимчука",
+    "кмт": "Колледж музыкально-театрального искусства имени Г. П. Вишневской",
 }
 
 CONTEXTUAL_FOLLOWUP_MARKERS = {
@@ -333,6 +417,11 @@ class ChatService:
         text = re.sub(r"[^\w\s№.-]", " ", text)
         text = re.sub(r"\s+", " ", text)
         return text.strip()
+
+    def compact_key(self, text: str) -> str:
+        """Сопоставляет школьные сокращения вроде "кп11" с alias "КП 11"."""
+        normalized = self.normalize_text(text).replace("ё", "е")
+        return re.sub(r"[^а-яa-z0-9№]", "", normalized)
 
     def is_plain_greeting(self, user_query: str) -> bool:
         q = self.normalize_text(user_query)
@@ -381,6 +470,46 @@ class ChatService:
         q = self.normalize_text(user_query).replace("ё", "е")
         return any(marker.replace("ё", "е") in q for marker in OTHER_COLLEGE_MARKERS)
 
+    def is_compare_colleges_query(self, user_query: str) -> bool:
+        q = self.normalize_text(user_query).replace("ё", "е")
+        return any(marker in q for marker in COMPARISON_HINTS)
+
+    def is_staff_query(self, user_query: str) -> bool:
+        q = self.normalize_text(user_query).replace("ё", "е")
+        return any(marker in q for marker in STAFF_HINTS)
+
+    def is_general_support_query(self, user_query: str) -> bool:
+        q = self.normalize_text(user_query).replace("ё", "е")
+        if any(marker in q for marker in GENERAL_SUPPORT_HINTS):
+            return True
+        has_admission = any(marker in q for marker in ["приемн", "приемк", "приемная", "приемной", "комисси", "кампан", "компан"])
+        has_contact = any(marker in q for marker in ["номер", "телефон", "контакт", "почт", "email", "куда звон", "куда пис"])
+        has_specific_college = self.canonical_college_from_text(user_query) is not None
+        return has_admission and has_contact and not has_specific_college
+
+    def is_catalog_recommendation_query(self, user_query: str) -> bool:
+        q = self.normalize_text(user_query).replace("ё", "е")
+        markers = {
+            "где учат",
+            "где обуч",
+            "учат на",
+            "обучиться на",
+            "колледжи для",
+            "колледж для",
+            "какие есть колледжи",
+            "в каком колледже",
+            "в каких колледжах",
+            "профессия",
+            "профессии",
+            "кем работать",
+            "кем можно работать",
+            "хочу поступить по",
+            "хочу поступить на",
+            "направления обучения",
+            "связанные с",
+        }
+        return any(marker in q for marker in markers)
+
     def is_college_existence_question(self, user_query: str) -> bool:
         q = self.normalize_text(user_query).replace("ё", "е")
         has_college_hint = "колледж" in q or "такой" in q or "он" in q
@@ -407,6 +536,12 @@ class ChatService:
         if not any(marker in q for marker in INDUSTRY_PROFESSION_HINTS):
             return False
         return self.get_reference_catalog().match_industry(user_query) is not None
+
+    def is_industry_colleges_query(self, user_query: str) -> bool:
+        q = self.normalize_text(user_query).replace("ё", "е")
+        has_college = "колледж" in q or "колледжи" in q or "где уч" in q or "поступить" in q
+        has_industry = self.get_reference_catalog().match_industry(user_query) is not None
+        return has_college and has_industry
 
 
     def is_abusive_without_task(self, user_query: str) -> bool:
@@ -644,6 +779,300 @@ class ChatService:
         lines.append(self.verification_hint(website or None))
         return "\n".join(lines)
 
+    def render_general_admission_support(self) -> str:
+        return (
+            "Для общих вопросов по приёму в колледжи Москвы можно обратиться в информационную поддержку:\n"
+            f"Телефон: {GENERAL_ADMISSION_SUPPORT_PHONE}\n"
+            f"Почта: {GENERAL_ADMISSION_SUPPORT_EMAIL}\n"
+            f"Страница контактов: {GENERAL_ADMISSION_SUPPORT_URL}\n\n"
+            "По конкретному колледжу лучше дополнительно смотреть его сайт и приёмную комиссию."
+        )
+
+    def render_staff_unknown_answer(self, db: Session, user_query: str) -> str:
+        college = self.canonical_college_from_db(db, user_query) or self.canonical_college_from_text(user_query)
+        if college:
+            card = self.get_college_card_for_name(db, college)
+            website = card.metadata_json.get("website", "") if card else ""
+            return (
+                f"По «{college}» я не буду выдумывать директора или состав администрации: в моей базе это не хранится.\n\n"
+                f"{self.verification_hint(website or None)}"
+            )
+        return (
+            "Я не храню данные о директорах и сотрудниках колледжей, поэтому не буду угадывать. "
+            f"Лучше проверить официальный сайт колледжа или страницу контактов: {GENERAL_ADMISSION_SUPPORT_URL}."
+        )
+
+    def catalog_query_variants(self, user_query: str) -> list[str]:
+        q = self.normalize_text(user_query).replace("ё", "е")
+        variants = [user_query]
+        replacements = [
+            ("повор", "повар"),
+            ("юриспруденц", "юрист право"),
+            ("нейросет", "интеллектуальные интегрированные системы разработчик интеллектуальных систем IT"),
+            ("искусственн интеллект", "интеллектуальные интегрированные системы разработчик интеллектуальных систем IT"),
+            ("креативн", "дизайн креативные индустрии"),
+            ("здравоохран", "медицина здоровье"),
+            ("промышлен", "производство инженерия промышленное оборудование мехатроника сварщик"),
+        ]
+        for needle, replacement in replacements:
+            if needle in q:
+                variants.append(f"{user_query}. {replacement}")
+        return variants
+
+    def render_catalog_recommendation(
+        self,
+        user_query: str,
+        *,
+        skip_colleges: set[str] | None = None,
+        is_more_request: bool = False,
+    ) -> str | None:
+        for query in self.catalog_query_variants(user_query):
+            answer = (
+                self.render_profession_recommendations_from_catalog(
+                    query,
+                    skip_colleges=skip_colleges,
+                    is_more_request=is_more_request,
+                )
+                or self.render_industry_college_recommendations_from_catalog(
+                    query,
+                    skip_colleges=skip_colleges,
+                    is_more_request=is_more_request,
+                )
+            )
+            if answer:
+                return answer
+        return None
+
+    def render_common_faq_answer(self, user_query: str) -> str | None:
+        q = self.normalize_text(user_query).replace("ё", "е")
+        support = f"{GENERAL_ADMISSION_SUPPORT_PHONE}, {GENERAL_ADMISSION_SUPPORT_EMAIL}"
+
+        if self.is_general_support_query(user_query):
+            return self.render_general_admission_support()
+
+        if "учебник" in q:
+            return (
+                "По FAQ проекта учебно-методическая литература предоставляется. "
+                "Если речь про дополнительные материалы, рабочую форму или платные расходники, это лучше уточнить в выбранном колледже.\n\n"
+                f"Общая информационная поддержка: {support}."
+            )
+
+        if "общежит" in q:
+            return (
+                "По FAQ проекта в колледжах Правительства Москвы нет общежитий. "
+                "Вопрос с жильём нужно решать самостоятельно.\n\n"
+                f"Если ситуация нестандартная, лучше уточнить в колледже или через общую поддержку: {support}."
+            )
+
+        if any(x in q for x in ["мама", "папа", "родител"]) and "заяв" in q:
+            return (
+                "По FAQ проекта заявление на поступление подаёт сам абитуриент из своего личного кабинета на mos.ru. "
+                "Родитель не подаёт заявление со своего личного кабинета.\n\n"
+                f"Если есть техническая проблема с доступом, можно уточнить порядок через поддержку: {support}."
+            )
+
+        if ("несколько" in q or "сколько" in q) and any(x in q for x in ["колледж", "заявлен", "вариант"]):
+            return (
+                "По базе вижу, что при подаче заявления на mos.ru вариантам присваивается приоритет от 1 до 5: "
+                "1 — самый желанный вариант. Это значит, что выбор нескольких вариантов предусмотрен, но точные ограничения формы лучше проверить прямо на mos.ru.\n\n"
+                f"Для уверенности можно обратиться в информационную поддержку: {support}."
+            )
+
+        if any(x in q for x in ["последний день", "до какого", "когда можно подать", "срок подачи", "сроки подачи"]):
+            return (
+                "По FAQ проекта приём заявлений через mos.ru начинается 26 июня 2026 года.\n"
+                "Для московских выпускников 9 класса 2025 и 2026 годов подача на бюджет завершается 26 июля 2026 года, "
+                "а если нужны вступительные испытания — 20 июля 2026 года.\n"
+                "Для остальных категорий граждан на базе 9 и 11 классов заявления можно подать до 15 августа 2026 года, "
+                "а если есть вступительные испытания — до 10 августа 2026 года.\n\n"
+                "Лучше сверить дату для своей ситуации на mos.ru или сайте колледжа."
+            )
+
+        if "приоритет" in q:
+            return (
+                "Приоритет в заявлении — это порядок твоих желаний по программам обучения.\n\n"
+                "1 — самый важный и желанный вариант, 5 — менее приоритетный. "
+                "При зачислении система учитывает конкурс и этот порядок: сначала смотрят более высокий приоритет, если по нему проходишь. "
+                "Также могут учитываться баллы ГИА, первоочередное/преимущественное право, индивидуальные достижения и вступительные испытания, если они есть.\n\n"
+                "Если выбираешь несколько вариантов, лучше ставить на 1 место не “самый надёжный”, а тот, куда больше всего хочешь поступить."
+            )
+
+        if any(x in q for x in ["день открытых", "открытых двер", "дод"]):
+            return (
+                "В базе нет точного расписания дней открытых дверей по каждому колледжу. "
+                "Лучше уточнить дату на сайте выбранного колледжа, в Атласе профессий или через общую приёмную кампанию.\n\n"
+                f"Общая информационная поддержка: {support}."
+            )
+
+        if any(x in q for x in ["вступитель", "внутренн", "ви ", "экзам"]) and any(x in q for x in ["какие", "что сдавать", "сдавать", "специальност"]):
+            return (
+                "Вступительные испытания зависят от конкретной специальности и колледжа. "
+                "В базе нет полного перечня испытаний по каждой программе, поэтому точный список лучше уточнить у выбранного колледжа или в приёмной комиссии.\n\n"
+                "По FAQ проекта расписание и выбор даты испытаний доступны при подаче заявления на mos.ru. "
+                f"Общая информационная поддержка: {support}."
+            )
+
+        if "сво" in q or "участник сво" in q:
+            return (
+                "В базе нет точного правила про поступление, если родитель участвует в СВО. "
+                "Лучше уточнить, относится ли твоя ситуация к первоочередному или преимущественному праву, и какие документы нужны для подтверждения.\n\n"
+                f"Можно обратиться в информационную поддержку колледжей Москвы: {support}."
+            )
+
+        if "льгот" in q or "первоочеред" in q or "преимуществен" in q:
+            return (
+                "По FAQ проекта есть первоочередное и преимущественное право, а также учёт индивидуальных достижений при равных баллах. "
+                "Но полный перечень категорий и документов лучше проверять по официальному правилу для твоей ситуации.\n\n"
+                f"Общая информационная поддержка: {support}."
+            )
+
+        if "напрямую" in q and "заяв" in q:
+            return (
+                "По FAQ проекта поступление на бюджет оформляется через электронное заявление на mos.ru. "
+                "Если речь про платное обучение или нестандартную ситуацию, лучше уточнить порядок у выбранного колледжа.\n\n"
+                f"Общая информационная поддержка: {support}."
+            )
+
+        if "федеральн" in q and "правительств" in q:
+            return (
+                "Главное отличие не в уровне образования: и колледж, и техникум дают среднее профессиональное образование, то есть СПО.\n\n"
+                "Колледжи Правительства Москвы относятся к московской системе колледжей, поэтому по поступлению лучше ориентироваться на mos.ru, "
+                "Атлас профессий и правила приёма колледжей Москвы. Федеральные и частные колледжи тоже работают в системе СПО, "
+                "но порядок приёма и отдельные условия они могут устанавливать самостоятельно.\n\n"
+                f"Подробнее про то, что такое колледж и СПО: {COLLEGE_EDUCATION_BLOG_URL}\n"
+                f"Для вопросов по московским колледжам: {support}."
+            )
+
+        if ("какое образование" in q or "что такое спо" in q or "что такое колледж" in q) and "колледж" in q:
+            return (
+                "Колледж — это среднее профессиональное образование, сокращённо СПО. "
+                "Поступить можно после 9-го или 11-го класса. Обычно ЕГЭ для поступления в колледж не нужен, "
+                "а дополнительные вступительные испытания бывают только на отдельных направлениях.\n\n"
+                f"Подробнее можно почитать здесь: {COLLEGE_EDUCATION_BLOG_URL}"
+            )
+
+        return None
+
+    def find_colleges_in_text(self, db: Session, text: str, limit: int = 5) -> list[str]:
+        normalized = self.normalize_text(text).replace("ё", "е")
+        compact = self.compact_key(text)
+        found: list[str] = []
+        seen: set[str] = set()
+
+        def add(name: str) -> None:
+            key = self.college_key(name)
+            if name and key not in seen:
+                seen.add(key)
+                found.append(name)
+
+        # Сначала известные alias, чтобы короткие школьные сокращения не терялись.
+        for alias, canonical in sorted(KNOWN_COLLEGE_ALIASES.items(), key=lambda item: len(item[0]), reverse=True):
+            alias_norm = self.normalize_text(alias).replace("ё", "е")
+            alias_compact = self.compact_key(alias)
+            if not alias_norm:
+                continue
+            if alias in {"мпк", "ммпк"}:
+                if re.search(rf"(^|\s){re.escape(alias_norm)}($|\s)", normalized):
+                    add(canonical)
+                continue
+            if alias_norm in normalized or (len(alias_compact) >= 3 and alias_compact in compact):
+                add(canonical)
+
+        docs = db.scalars(select(Document).where(Document.doc_type == "college")).all()
+        variants: list[tuple[str, str]] = []
+        for doc in docs:
+            college_name = self.extract_college_name(doc)
+            aliases = doc.metadata_json.get("aliases", []) or []
+            for variant in [college_name, *[str(alias) for alias in aliases]]:
+                variants.append((variant, college_name))
+
+        for variant, college_name in sorted(variants, key=lambda item: len(item[0]), reverse=True):
+            value = self.normalize_text(variant).replace("ё", "е")
+            value_compact = self.compact_key(variant)
+            if not value:
+                continue
+            if value in normalized:
+                add(college_name)
+            elif len(value_compact) >= 3 and value_compact in compact:
+                add(college_name)
+            if len(found) >= limit:
+                break
+
+        return found[:limit]
+
+    def collect_seen_colleges_from_history(self, db: Session, messages) -> set[str]:
+        seen: set[str] = set()
+        for msg in messages:
+            if getattr(msg, "role", "") != "assistant":
+                continue
+            for college in self.find_colleges_in_text(db, str(getattr(msg, "content", "") or ""), limit=20):
+                seen.add(self.college_key(college))
+        return seen
+
+    def render_college_comparison(self, db: Session, user_query: str, previous_messages) -> str:
+        colleges = self.find_colleges_in_text(db, user_query, limit=4)
+        if len(colleges) < 2:
+            history_college = self.find_last_college_in_history(db, previous_messages)
+            if history_college and history_college not in colleges:
+                colleges.append(history_college)
+
+        if len(colleges) < 2:
+            return (
+                "Я могу сравнить колледжи, но мне нужны хотя бы два названия. "
+                "Напиши, например: «сравни КС 54 и ИТ.Москва» или «сравни МПК и Ушинского»."
+            )
+
+        if "рейтинг" in self.normalize_text(user_query).replace("ё", "е"):
+            intro = (
+                "Объективный рейтинг я не буду выдумывать: в моей базе нет официальной шкалы «кто лучше». "
+                "Зато сравню по тому, что есть в данных: специальности, профессии после обучения, адреса и сайты."
+            )
+        else:
+            intro = "Сравню по фактам из моей базы: специальности, профессии после обучения, адреса и сайты."
+
+        lines = [intro]
+        for idx, college in enumerate(colleges[:3], start=1):
+            card = self.get_college_card_for_name(db, college)
+            display_name = self.extract_college_name(card) if card else college
+            specs = self.get_all_specialty_docs_for_college(db, college)[:4]
+            website = card.metadata_json.get("website", "") if card else ""
+            addresses = card.metadata_json.get("addresses", []) if card else []
+
+            lines.append("")
+            lines.append(f"{idx}. {display_name}")
+            if specs:
+                spec_names = [self.extract_specialty_name(doc) for doc in specs if self.extract_specialty_name(doc)]
+                lines.append(f"   Что смотреть: {', '.join(spec_names[:4])}.")
+            if addresses:
+                lines.append(f"   Адрес: {addresses[0]}")
+            if website:
+                lines.append(f"   Сайт: {website}")
+
+        lines.append("")
+        lines.append("Если скажешь направление сравнения — IT, педагогика, дизайн, медицина, право — я сравню точнее.")
+        return "\n".join(lines)
+
+    def render_detail_followup_from_history(self, db: Session, previous_messages) -> str | None:
+        choices = self.parse_last_numbered_specialty_choices(previous_messages)
+        if len(choices) > 1:
+            lines = ["Могу рассказать подробнее, но в прошлом ответе было несколько вариантов. Выбери номер:"]
+            for idx, (college, item) in enumerate(choices[:6], start=1):
+                if college:
+                    lines.append(f"{idx}. {college} — {item}")
+                else:
+                    lines.append(f"{idx}. {item}")
+            return "\n".join(lines)
+
+        if len(choices) == 1:
+            college, item = choices[0]
+            return self.render_specialty_detail_by_name(db, item, college)
+
+        last_college = self.find_last_college_in_history(db, previous_messages)
+        if last_college:
+            return self.render_all_specialties_for_college(db, last_college)
+
+        return None
+
     def render_industry_professions_from_catalog(self, user_query: str) -> str | None:
         match = self.get_reference_catalog().match_industry(user_query)
         if not match or not match.professions:
@@ -797,6 +1226,7 @@ class ChatService:
 
     def canonical_college_from_text(self, text: str) -> str | None:
         normalized = self.normalize_text(text).replace("ё", "е")
+        compact = self.compact_key(text)
         # МПК — строго педагогический, ММПК — только музыкальный.
         if re.search(r"(^|\s)мпк($|\s)", normalized):
             return "Московский педагогический колледж"
@@ -805,7 +1235,9 @@ class ChatService:
         for alias, canonical in KNOWN_COLLEGE_ALIASES.items():
             if alias in {"мпк", "ммпк"}:
                 continue
-            if alias in normalized:
+            alias_norm = self.normalize_text(alias).replace("ё", "е")
+            alias_compact = self.compact_key(alias)
+            if alias_norm in normalized or (len(alias_compact) >= 3 and alias_compact in compact):
                 return canonical
         return None
 
@@ -822,6 +1254,7 @@ class ChatService:
 
     def canonical_college_from_db(self, db: Session, text: str) -> str | None:
         normalized = self.normalize_text(text).replace("ё", "е")
+        compact = self.compact_key(text)
         if not normalized:
             return None
 
@@ -837,6 +1270,9 @@ class ChatService:
                 if value in normalized:
                     return college_name
                 if len(value) <= 6 and re.search(rf"(^|\s){re.escape(value)}($|\s)", normalized):
+                    return college_name
+                value_compact = self.compact_key(variant)
+                if len(value_compact) >= 3 and value_compact in compact:
                     return college_name
         return None
 
@@ -1450,10 +1886,20 @@ class ChatService:
     def render_faq_fallback(self, documents: list[Document]) -> str:
         faq_docs = [doc for doc in documents if doc.doc_type == "faq"][:3]
         if not faq_docs:
-            return (
-                "Я могу ошибаться в этом вопросе, поэтому лучше сверить правило в Атласе профессий, "
-                f"на mos.ru или на сайте выбранного колледжа. Атлас: {ATLAS_URL}"
-            )
+            return random.choice([
+                f"Я могу ошибаться с этим правилом, поэтому лучше сверить его на mos.ru, в Атласе профессий ({ATLAS_URL}) или у выбранного колледжа.",
+                f"Я могу ошибаться: точного правила под такой вопрос у меня сейчас нет. Надёжнее проверить mos.ru, Атлас профессий ({ATLAS_URL}) или сайт колледжа.",
+                f"Я могу ошибаться, поэтому не хочу придумывать официальный порядок. Лучше сверить вопрос на mos.ru, в Атласе профессий ({ATLAS_URL}) или у приёмной комиссии.",
+                f"Я могу ошибаться по этой формулировке и не уверен в фактах. Проверь, пожалуйста, mos.ru, Атлас профессий ({ATLAS_URL}) или сайт конкретного колледжа.",
+                f"Я могу ошибаться в такой детали. Безопаснее посмотреть официальные правила на mos.ru или в Атласе профессий: {ATLAS_URL}.",
+                f"Я могу ошибаться, потому что здесь нужен официальный источник. Я бы сверил mos.ru, Атлас профессий ({ATLAS_URL}) и сайт колледжа.",
+                f"Я могу ошибаться: у меня нет достаточно точного FAQ-факта для уверенного ответа. Лучше проверить Атлас профессий ({ATLAS_URL}) или обратиться в приёмную комиссию.",
+                f"Я могу ошибаться, а ложная информация тут вредна. Лучше уточнить этот пункт на mos.ru, в Атласе профессий ({ATLAS_URL}) или у колледжа.",
+                f"Я могу ошибаться по этому вопросу. Могу подсказать общую логику, но проверку делай через mos.ru или Атлас: {ATLAS_URL}.",
+                f"Я могу ошибаться: похоже на вопрос к правилам приёма, где важны детали. Сверь mos.ru, Атлас профессий ({ATLAS_URL}) или сайт выбранного колледжа.",
+                f"Я могу ошибаться, поэтому не буду угадывать норму приёма. Самый надёжный путь — mos.ru, Атлас профессий ({ATLAS_URL}) или приёмная комиссия колледжа.",
+                f"Я могу ошибаться по этой части, поэтому лучше проверить первоисточник: mos.ru, Атлас профессий ({ATLAS_URL}) или сайт колледжа.",
+            ])
 
         answer = faq_docs[0].content.strip()
         answer += "\n\nЕсли хочешь, могу объяснить это проще."
@@ -1816,13 +2262,83 @@ class ChatService:
         # В chat-режиме не называем колледжи: без RAG-контекста это самый частый источник галлюцинаций.
         q = self.normalize_text(decision.normalized_query)
         if self.is_short_followup(q):
+            return random.choice([
+                "Понял. Напиши чуть конкретнее, что продолжить: показать ещё колледжи, сравнить варианты или объяснить профессию?",
+                "Давай продолжим, только чуть конкретнее: нужны другие колледжи, контакты, специальности или правила поступления?",
+                "Согласен. Напиши чуть конкретнее, в какую сторону идём: ещё варианты, сравнение или подробнее про прошлый колледж?",
+                "Окей. Чтобы не гадать, напиши чуть конкретнее: колледжи, профессии после обучения, адреса/контакты или поступление.",
+                "Хорошо. Могу продолжить по прошлой теме, но напиши чуть конкретнее: «ещё колледжи», «сравни» или «подробнее».",
+            ])
+        return random.choice([
+            "Я лучше отвечаю, когда вопрос привязан к колледжу, профессии, отрасли или поступлению. Попробуй написать: «где учат на ...» или «сравни ... и ...».",
+            "Похоже, вопрос получился слишком общий. Могу помочь по трём темам: подобрать колледж, объяснить специальность или ответить про поступление.",
+            "Я не хочу угадывать. Напиши чуть конкретнее: название колледжа, профессию, отрасль или вопрос по mos.ru.",
+            "Давай сформулируем точнее: тебе нужны колледжи по профессии, контакты колледжа, сравнение вариантов или правила приёма?",
+            "Сейчас не хватает опоры для ответа. Можно спросить так: «где учат на сварщика», «какие колледжи в медицине», «дай адрес КП 11».",
+            "Я могу промахнуться, если отвечу на такую формулировку. Уточни предмет: колледж, специальность, профессия, отрасль или поступление.",
+            "Пока не понимаю, какой сценарий нужен. Выбери направление: профориентация, рекомендация колледжа, контакты или FAQ по поступлению.",
+            "Давай без гадания: напиши профессию или колледж, а я проверю по базе и отвечу аккуратно.",
+            "Мне нужно чуть больше контекста. Например: «колледжи для дизайнеров», «сроки подачи заявления», «контакты КАИТ 20».",
+            "Вижу сообщение, но не вижу понятной темы. Могу подобрать колледжи, сравнить варианты или объяснить правила поступления.",
+            "Чтобы ответ был полезным, уточни одно слово: профессия, колледж, отрасль или поступление.",
+            "Я не буду придумывать. Переформулируй через цель: кем хочешь стать, какой колледж смотришь или какой вопрос по приёму интересует.",
+            "Пока это не похоже на вопрос из моей зоны. Если свяжешь его с колледжем, профессией или поступлением, я помогу.",
+            "Могу помочь, но нужно сузить тему. Напиши, например: «медицина», «IT», «КП 11», «документы» или «дни открытых дверей».",
+            "Дай мне одну зацепку: название колледжа, профессию или отрасль. Тогда отвечу по базе, без выдумок.",
+        ])
+
+    def render_smart_clarification(self, user_query: str, previous_messages) -> str:
+        q = self.normalize_text(user_query).replace("ё", "е")
+        if "кинолог" in q:
             return (
-                "Я понял. Чтобы продолжить без догадок, напиши чуть конкретнее: "
-                "нужны другие колледжи, сравнение вариантов или объяснение профессии?"
+                "Похоже, ты спрашиваешь про обучение на кинолога. В моей базе московских колледжей я не вижу точного направления «кинолог», "
+                "поэтому не буду придумывать колледж.\n\n"
+                f"Лучше проверить Атлас профессий: {ATLAS_URL} или уточнить через общую поддержку: "
+                f"{GENERAL_ADMISSION_SUPPORT_PHONE}, {GENERAL_ADMISSION_SUPPORT_EMAIL}."
+            )
+        if "нейросет" in q or "искусственн интеллект" in q:
+            return (
+                "Похоже, тебе интересны нейросети и ИИ. В базе это лучше искать не словом «нейросети», а через IT-направления: "
+                "программирование, интеллектуальные интегрированные системы, базы данных и разработку ПО.\n\n"
+                "Могу следующим сообщением показать колледжи по ближайшему IT-направлению."
+            )
+        if "форма" in q or "носить форму" in q:
+            return (
+                "Правила формы одежды зависят от конкретного колледжа, а в моей базе этого нет. "
+                "Лучше проверить сайт колледжа или спросить приёмную комиссию."
+            )
+        if "подготов" in q and "сесс" in q:
+            return (
+                "Это скорее вопрос про учёбу, а не про поступление. Общий совет: уточнить список зачётов/экзаменов у преподавателей, "
+                "разбить темы по дням и сначала закрыть долги по практическим работам.\n\n"
+                "Если хочешь, могу помочь связать это с выбором специальности: где будет больше практики, техники, общения или теории."
+            )
+
+        last_topic = self.find_last_meaningful_user_message(previous_messages)
+        options = [
+            "подобрать колледжи по профессии",
+            "сравнить 2–3 колледжа",
+            "дать контакты или адрес колледжа",
+            "ответить про поступление на mos.ru",
+            "помочь выбрать направление",
+        ]
+        if last_topic:
+            return (
+                f"Я могу понять это как продолжение темы «{last_topic}», но формулировка неоднозначная.\n\n"
+                "Могу сделать одно из этого:\n"
+                f"1. {options[0]}.\n"
+                f"2. {options[1]}.\n"
+                f"3. {options[2]}.\n\n"
+                "Напиши номер или коротко уточни тему."
             )
         return (
-            "Я на связи. Лучше всего я помогаю с колледжами Москвы, специальностями и поступлением. "
-            "Напиши, что хочешь узнать, и я отвечу по базе."
+            "Я попробовал распознать вопрос, но вижу несколько возможных тем.\n\n"
+            "Могу помочь так:\n"
+            f"1. {options[0]}.\n"
+            f"2. {options[1]}.\n"
+            f"3. {options[3]}.\n"
+            f"4. {options[4]}.\n\n"
+            "Напиши номер или добавь название колледжа/профессии."
         )
 
     def render_career_guidance_answer(self, decision: RouterDecision, recent_messages) -> str:
@@ -2015,6 +2531,7 @@ class ChatService:
         if more_colleges_request:
             # Для "ещё колледжи" держим прошлую тему и не показываем те же варианты повторно.
             more_query, more_colleges_seen = self.last_recommendation_context(previous_messages)
+            more_colleges_seen.update(self.collect_seen_colleges_from_history(db, previous_messages))
             if more_query:
                 decision.mode = "recommend_colleges"
                 decision.normalized_query = more_query
@@ -2031,8 +2548,30 @@ class ChatService:
             answer = self.render_out_of_scope(user_query)
             return self.save_and_return(db, session, user_query, answer, "out_of_scope")
 
+        if self.is_staff_query(user_query):
+            answer = self.render_staff_unknown_answer(db, user_query)
+            return self.save_and_return(db, session, user_query, answer, "faq")
+
+        if self.is_compare_colleges_query(user_query):
+            answer = self.render_college_comparison(db, user_query, previous_messages)
+            return self.save_and_return(db, session, user_query, answer, "compare")
+
+        common_faq_answer = self.render_common_faq_answer(user_query)
+        if common_faq_answer:
+            return self.save_and_return(db, session, user_query, common_faq_answer, "faq")
+
+        if self.is_industry_colleges_query(user_query):
+            answer = self.render_catalog_recommendation(user_query)
+            if answer:
+                return self.save_and_return(db, session, user_query, answer, "recommend_colleges")
+
         if self.is_industry_professions_query(user_query):
             answer = self.render_industry_professions_from_catalog(user_query)
+            if answer:
+                return self.save_and_return(db, session, user_query, answer, "recommend_colleges")
+
+        if self.is_catalog_recommendation_query(user_query):
+            answer = self.render_catalog_recommendation(user_query)
             if answer:
                 return self.save_and_return(db, session, user_query, answer, "recommend_colleges")
 
@@ -2118,6 +2657,11 @@ class ChatService:
                 answer = self.render_specialty_detail_by_name(db, specialty_from_list, college_from_list)
                 return self.save_and_return(db, session, user_query, answer, "detail_more")
 
+        if decision.mode != "career_guidance" and self.is_followup_for_detail(user_query):
+            answer = self.render_detail_followup_from_history(db, previous_messages)
+            if answer:
+                return self.save_and_return(db, session, user_query, answer, "detail_more")
+
         # Исправление после ошибки: "при чём тут юриспруденция/веб-разработка".
         if any(mark in self.normalize_text(user_query) for mark in ["при чем тут", "при чём тут", "не то", "не об этом"]):
             last_college = self.canonical_college_from_text(self.find_last_assistant_message(previous_messages)) or self.canonical_college_from_text(self.find_last_user_message(previous_messages))
@@ -2132,7 +2676,7 @@ class ChatService:
             return self.save_and_return(db, session, user_query, answer, "faq_simple")
 
         if decision.mode == "chat":
-            answer = self.render_chat_answer(decision, previous_messages)
+            answer = self.render_smart_clarification(user_query, previous_messages)
             return self.save_and_return(db, session, user_query, answer, "chat")
 
         if decision.mode == "career_guidance":
@@ -2203,17 +2747,10 @@ class ChatService:
 
         if decision.mode == "recommend_colleges":
             catalog_query = decision.normalized_query if more_colleges_request else user_query
-            answer = (
-                self.render_profession_recommendations_from_catalog(
-                    catalog_query,
-                    skip_colleges=more_colleges_seen,
-                    is_more_request=more_colleges_request,
-                )
-                or self.render_industry_college_recommendations_from_catalog(
-                    catalog_query,
-                    skip_colleges=more_colleges_seen,
-                    is_more_request=more_colleges_request,
-                )
+            answer = self.render_catalog_recommendation(
+                catalog_query,
+                skip_colleges=more_colleges_seen,
+                is_more_request=more_colleges_request,
             )
             if answer:
                 self.session_service.add_message(db=db, session=session, role="assistant", content=answer)
