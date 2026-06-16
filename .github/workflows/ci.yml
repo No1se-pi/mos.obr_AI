@@ -47,5 +47,8 @@ jobs:
       - name: Docker build
         run: docker build .
 
+      - name: Prepare Docker Compose env file
+        run: cp .env.example .env
+
       - name: Docker Compose config
         run: docker compose config --quiet
