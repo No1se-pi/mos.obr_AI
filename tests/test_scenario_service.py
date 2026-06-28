@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.db.chat_models import ChatMessage, ChatSession
 from app.db.repository import Base, Document
-from app.services.scenario_service import ScenarioService
+from app.services.scenario_service import ADMISSION_TOPIC_BUTTONS, ScenarioService
 from app.services.session_service import SessionService
 
 
@@ -51,6 +51,10 @@ class ScenarioServiceTest(unittest.TestCase):
             "admission_topic:rules_2026",
         )
         self.assertEqual(
+            self.service.resolve_action(message="СВО и первоочередное право", route=None, action=None),
+            "admission_topic:svo_priority",
+        )
+        self.assertEqual(
             self.service.resolve_action(message="1. Подробнее", route=None, action=None),
             "pick:1",
         )
@@ -71,13 +75,17 @@ class ScenarioServiceTest(unittest.TestCase):
             "pick:2",
         )
 
+    def test_svo_topic_is_hidden_from_admission_buttons(self) -> None:
+        self.assertNotIn("СВО и первоочередное право", ADMISSION_TOPIC_BUTTONS)
+
     def test_first_role_answer_is_natural(self) -> None:
         applicant = self.service.main_menu_text({"user_type": "applicant"}, first_time=True)
         parent = self.service.main_menu_text({"user_type": "parent"}, first_time=True)
 
-        self.assertIn("Хорошо, помогу", applicant)
-        self.assertIn("Что хочешь сделать", applicant)
-        self.assertIn("Выберите нужный раздел", parent)
+        self.assertIn("Привет!", applicant)
+        self.assertIn("следующую ступень", applicant)
+        self.assertIn("Здравствуйте!", parent)
+        self.assertIn("Выберите, с чего удобнее начать", parent)
         self.assertNotIn("Буду объяснять", applicant)
         self.assertNotIn("Буду обращаться", parent)
 
@@ -227,6 +235,81 @@ class ScenarioServiceTest(unittest.TestCase):
 
         self.assertIn("Обеспечение информационной безопасности автоматизированных систем", names)
         self.assertNotIn("Технология производства изделий из полимерных композитов", names)
+
+    def test_interest_rules_prioritize_education_for_children(self) -> None:
+        directions = self.service.infer_directions("Мне нравится работать с детьми и объяснять")
+
+        self.assertEqual(directions[0][0], "education")
+
+    def test_jewelry_interest_uses_relevant_specialties(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+        db.add_all(
+            [
+                Document(
+                    doc_type="specialty",
+                    title="Ювелир",
+                    content="",
+                    metadata_json={
+                        "college_name": "Колледж декоративно-прикладного искусства имени Карла Фаберже",
+                        "specialty_name": "Ювелир",
+                        "professions": ["Ювелир-закрепщик", "Ювелир-монтировщик"],
+                    },
+                    embedding_json=[],
+                ),
+                Document(
+                    doc_type="specialty",
+                    title="Полимеры",
+                    content="",
+                    metadata_json={
+                        "college_name": "Промышленный колледж",
+                        "specialty_name": "Технология производства изделий из полимерных композитов",
+                        "professions": ["Технолог"],
+                    },
+                    embedding_json=[],
+                ),
+            ]
+        )
+        db.commit()
+
+        service = ScenarioService(chat_service=FakeChatService())
+        items = service.find_specialty_options(db, "Мне нравится ювелирное дело и украшения")
+        names = [item["specialty"] for item in items]
+
+        self.assertIn("Ювелир", names)
+        self.assertNotIn("Технология производства изделий из полимерных композитов", names)
+
+    def test_general_exams_answer_is_not_ovz(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+
+        service = ScenarioService(chat_service=FakeChatService())
+        first = service.ask(db, "u3", "Абитуриент / поступающий")
+        result = service.ask(
+            db,
+            "u3",
+            "",
+            session_id=first["session_id"],
+            action="admission_topic:exams",
+        )
+
+        self.assertIn("нет полного списка вступительных испытаний", result["answer"])
+        self.assertIn("Можно ещё посмотреть", result["answer"])
+        self.assertNotIn("ОВЗ", result["answer"])
+        self.assertIn("Выбрать колледж", result["suggestions"])
+
+    def test_svo_answer_is_soft_and_has_related_topics(self) -> None:
+        answer = self.service.append_related_admission_topics(
+            self.service.render_svo_priority_answer({"user_type": "parent"}),
+            "svo_priority",
+        )
+
+        self.assertIn("По одному сообщению нельзя точно подтвердить", answer)
+        self.assertIn("приёмной комиссии", answer)
+        self.assertIn("Можно ещё посмотреть", answer)
+        self.assertNotIn("право точно положено", answer)
 
 
 if __name__ == "__main__":

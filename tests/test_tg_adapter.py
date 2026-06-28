@@ -1,6 +1,7 @@
 import unittest
 
 from app.interfaces.tg_adapter import TELEGRAM_SAFE_HTML_LIMIT, TelegramChatAdapter
+from app.interfaces.telegram_bot import telegram_button_label
 
 
 class TelegramAdapterTest(unittest.TestCase):
@@ -23,6 +24,20 @@ class TelegramAdapterTest(unittest.TestCase):
             self.assertEqual(chunk.count("<code>"), chunk.count("</code>"))
             self.assertEqual(chunk.count("<blockquote>"), chunk.count("</blockquote>"))
             self.assertNotEqual(chunk.strip(), "")
+
+    def test_telegram_button_icons_are_varied(self) -> None:
+        labels = {
+            "Как подать заявление": "📨",
+            "Какие документы нужны": "📄",
+            "Сроки поступления": "📅",
+            "Вступительные испытания": "🧪",
+            "Бюджет и конкурс": "💰",
+            "Главное меню": "🏠",
+        }
+
+        for label, icon in labels.items():
+            with self.subTest(label=label):
+                self.assertTrue(telegram_button_label(label).startswith(icon))
 
 
 if __name__ == "__main__":

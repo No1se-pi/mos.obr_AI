@@ -390,7 +390,7 @@ class ChatServiceRegressionTest(unittest.TestCase):
 
         exams = self.service.render_common_faq_answer("какие ВИ нужно сдавать на разные специальности")
         self.assertIsNotNone(exams)
-        self.assertIn("В базе нет полного перечня", exams)
+        self.assertIn("В моей базе нет полного перечня", exams)
         self.assertNotIn("не буду угадывать", exams.lower())
 
     def test_priority_and_federal_answers_are_clearer(self) -> None:

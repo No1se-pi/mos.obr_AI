@@ -67,18 +67,38 @@ def telegram_button_label(label: str) -> str:
     lowered = label.lower()
     if label == END_SESSION_TEXT:
         return "✅ Завершить сессию"
-    if label in {"Главное меню", "Назад"}:
-        return f"🧭 {label}"
-    if "колледж" in lowered:
-        return f"🎓 {label}"
-    if any(word in lowered for word in ["профес", "специаль", "отрасл"]):
-        return f"📚 {label}"
-    if any(word in lowered for word in ["поступ", "документ", "заявлен", "срок", "льгот", "сво"]):
-        return f"📝 {label}"
+    if label == "Главное меню":
+        return f"🏠 {label}"
+    if label == "Назад":
+        return f"↩️ {label}"
+    if any(word in lowered for word in ["родитель", "абитуриент", "поступающий"]):
+        return f"👤 {label}"
+    if any(word in lowered for word in ["свой вопрос", "другой вопрос", "задать вопрос"]):
+        return f"💬 {label}"
     if any(word in lowered for word in ["найти", "поиск", "изменить", "уточнить"]):
         return f"🔎 {label}"
     if any(word in lowered for word in ["контакт", "адрес"]):
         return f"📞 {label}"
+    if "колледж" in lowered:
+        return f"🎓 {label}"
+    if any(word in lowered for word in ["профес", "специаль", "отрасл", "направление"]):
+        return f"📚 {label}"
+    if any(word in lowered for word in ["заявлен", "подать"]):
+        return f"📨 {label}"
+    if "документ" in lowered:
+        return f"📄 {label}"
+    if "срок" in lowered:
+        return f"📅 {label}"
+    if any(word in lowered for word in ["вступитель", "испытан", "экзам"]):
+        return f"🧪 {label}"
+    if any(word in lowered for word in ["овз", "специальные условия", "особые условия"]):
+        return f"♿ {label}"
+    if any(word in lowered for word in ["арм", "отсроч"]):
+        return f"🛡️ {label}"
+    if any(word in lowered for word in ["бюджет", "конкурс"]):
+        return f"💰 {label}"
+    if any(word in lowered for word in ["правила", "порядок поступления", "поступ"]):
+        return f"📋 {label}"
     return label
 
 

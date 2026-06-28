@@ -66,11 +66,43 @@ ADMISSION_TOPICS: list[tuple[str, str, str]] = [
     ("rules_2026", "Правила приёма в 2026 году", "правила приёма в колледжи Москвы в 2026 году документы сроки заявление"),
     ("svo_priority", "СВО и первоочередное право", "первоочередное право зачисления СВО дети участников СВО льготы поступление"),
 ]
-ADMISSION_TOPIC_BUTTONS = [label for _, label, _ in ADMISSION_TOPICS] + [
+HIDDEN_ADMISSION_TOPIC_SLUGS = {"svo_priority"}
+ADMISSION_TOPIC_BUTTONS = [label for slug, label, _ in ADMISSION_TOPICS if slug not in HIDDEN_ADMISSION_TOPIC_SLUGS] + [
     "Другой вопрос про поступление",
     MAIN_MENU_BUTTON,
 ]
 ADMISSION_QUERIES = {slug: query for slug, _, query in ADMISSION_TOPICS}
+ADMISSION_RELATED_TOPICS: dict[str, list[str]] = {
+    "ovz": [
+        "Какие документы нужны",
+        "Как подать заявление",
+        "Вступительные испытания",
+        "Сроки поступления",
+    ],
+    "documents": [
+        "Как подать заявление",
+        "Сроки поступления",
+        "Бюджет и конкурс",
+        "ОВЗ и специальные условия",
+    ],
+    "svo_priority": [
+        "Какие документы нужны",
+        "Как подать заявление",
+        "Бюджет и конкурс",
+        "Сроки поступления",
+    ],
+    "army": [
+        "Отсрочка от армии",
+        "Поступление после колледжа",
+        "Документы для поступления",
+    ],
+    "exams": [
+        "Как подать заявление",
+        "Какие документы нужны",
+        "Контакты колледжа",
+        "Выбрать колледж",
+    ],
+}
 
 INDUSTRY_BUTTONS: list[tuple[str, str]] = [
     ("IT и цифровые технологии", "it"),
@@ -87,9 +119,11 @@ INDUSTRY_BUTTONS: list[tuple[str, str]] = [
 ]
 
 INTEREST_KEYWORDS: list[tuple[str, tuple[str, ...], str]] = [
+    ("education", ("дет", "ребен", "ребён", "работа с детьми", "люблю детей", "объясн", "учить", "учител", "помогать учиться", "школ", "детский сад", "воспитател", "педагог", "наставник", "кружк", "занятия с детьми", "развитие детей", "дошколь", "младшие классы", "начальные классы", "вожат"), "интерес к обучению, объяснению и работе с детьми"),
+    ("jewelry", ("ювелир", "украшен", "драгоцен", "работа с метал", "кольц", "серьг", "дизайн украш", "ювелирное дело", "ручная работа", "издел", "камн", "огран", "часы", "часами"), "интерес к ювелирному делу, ручной работе и декоративным изделиям"),
     ("it", ("матем", "информ", "код", "программ", "игр", "компьют", "данн", "нейро", "техник", "хак", "пентест", "кибер", "сети", "админ"), "интерес к компьютерам, логике и технологиям"),
     ("design", ("рис", "дизайн", "арт", "фото", "творч", "визуал", "одеж", "мода"), "интерес к визуалу, творчеству и созданию образов"),
-    ("medicine", ("биолог", "мед", "здоров", "помог", "люд", "дет", "социаль"), "желание помогать людям и интерес к здоровью"),
+    ("medicine", ("биолог", "мед", "здоров", "леч", "пациент", "больниц", "сестрин", "фарма", "врач", "социаль"), "желание помогать людям и интерес к здоровью"),
     ("law", ("право", "безопас", "полици", "закон", "защит"), "интерес к правилам, безопасности и защите людей"),
     ("finance", ("эконом", "деньг", "банк", "счит", "аналит"), "интерес к цифрам, деньгам и анализу"),
     ("tourism", ("сервис", "туризм", "отел", "гост", "общаться"), "интерес к сервису, общению и организации"),
@@ -150,6 +184,34 @@ MUSIC_CONTEXT_MARKERS = (
     "вокал",
     "сцена",
     "хор",
+)
+
+JEWELRY_QUERY_TERMS = (
+    "ювелир",
+    "ювелирное дело",
+    "украшен",
+    "драгоцен",
+    "кольц",
+    "серьг",
+    "дизайн украш",
+    "работа с метал",
+    "камн",
+    "огран",
+)
+
+JEWELRY_SPECIALTY_MARKERS = (
+    "ювелир",
+    "технология обработки алмазов",
+    "декоративно-прикладное искусство",
+    "реставрация",
+)
+
+CONSTRUCTION_EXCLUDE_WITHOUT_CONTEXT = (
+    "сетевое и системное администрирование",
+    "компьютерные системы",
+    "программ",
+    "информационной безопасности",
+    "веб-разработка",
 )
 
 
@@ -233,6 +295,7 @@ def action_for_label(label: str, *, route: str | None = None, step: str | None =
         "не знаю с чего начать": "college_specialty_unknown",
         "показать еще колледжи": "show_more_colleges",
         "выбрать профессию": "route_profession",
+        "выбрать специальность": "route_profession",
         "выбрать отрасль": "choose_industry",
         "я знаю профессию": "know_profession",
         "я не знаю что выбрать": "unknown_profession",
@@ -247,6 +310,7 @@ def action_for_label(label: str, *, route: str | None = None, step: str | None =
         "узнать о порядке поступления": "route_admission",
         "поступление": "route_admission",
         "другой вопрос про поступление": "other_admission_question",
+        "контакты колледжа": "route_college",
         "свой вопрос": "route_custom",
     }
     if normalized == "показать еще":
@@ -372,10 +436,10 @@ class ScenarioService:
         if action_code.startswith("college_") or route == "college" or state.get("current_route") == "college":
             return self.handle_college(db, session, state, message, action_code).as_dict()
 
-        if action_code.startswith("profession_") or action_code.startswith("industry_") or route == "profession" or state.get("current_route") == "profession":
+        if action_code.startswith("profession_") or action_code.startswith(("industry_", "industry:")) or route == "profession" or state.get("current_route") == "profession":
             return self.handle_profession(db, session, state, message, action_code).as_dict()
 
-        if action_code.startswith("admission_") or route == "admission" or state.get("current_route") == "admission":
+        if action_code.startswith(("admission_", "admission_topic:")) or route == "admission" or state.get("current_route") == "admission":
             return self.handle_admission(db, session, state, message, action_code, top_k=top_k).as_dict()
 
         if action_code.startswith("custom_") or route == "custom" or state.get("current_route") == "custom":
@@ -437,7 +501,7 @@ class ScenarioService:
         if raw in explicit_actions:
             return explicit_actions[raw]
 
-        if route and not action:
+        if route and not action and not message.strip():
             route_map = {
                 "college": "college_start",
                 "profession": "profession_start",
@@ -465,6 +529,7 @@ class ScenarioService:
             "показать еще колледжи": "college_more_results",
             "показать еще варианты": "college_more_results",
             "выбрать профессию": "profession_start",
+            "выбрать специальность": "profession_start",
             "выбрать отрасль": "profession_choose_industry",
             "я знаю профессию": "profession_know",
             "я не знаю что выбрать": "profession_unknown",
@@ -480,6 +545,7 @@ class ScenarioService:
             "узнать о порядке поступления": "admission_start",
             "поступление": "admission_start",
             "другой вопрос про поступление": "admission_other",
+            "контакты колледжа": "college_start",
             "свой вопрос": "custom_start",
             "назад": "back",
         }
@@ -531,12 +597,20 @@ class ScenarioService:
     def main_menu_text(self, state: dict[str, Any], *, first_time: bool = False) -> str:
         if state.get("user_type") == "parent":
             if first_time:
-                return "Хорошо, помогу сориентироваться по колледжам, специальностям и вопросам поступления. Выберите нужный раздел."
-            prefix = "Главное меню. Выберите раздел."
+                return (
+                    "Здравствуйте!\n\n"
+                    "Я помогу сориентироваться в колледжах Москвы, специальностях и вопросах поступления.\n"
+                    "Выберите, с чего удобнее начать."
+                )
+            prefix = "Главное меню. Выберите, с чего удобнее продолжить."
         else:
             if first_time:
-                return "Хорошо, помогу разобраться простым языком. Что хочешь сделать?"
-            prefix = "Главное меню. Что хочешь сделать?"
+                return (
+                    "Привет!\n\n"
+                    "Давай помогу тебе выбрать следующую ступень своего будущего.\n"
+                    "Для начала давай определимся, что мы с тобой обсудим."
+                )
+            prefix = "Главное меню. Что хочешь сделать дальше?"
         return (
             f"{prefix}\n\n"
             "Выберите один из разделов ниже."
@@ -1053,7 +1127,11 @@ class ScenarioService:
                 db,
                 session,
                 message,
-                "Что больше нравится в этой отрасли? Можно написать свободно: работать с людьми, создавать визуал, чинить технику, писать код, помогать детям, анализировать данные.",
+                (
+                    "Расскажите, какие интересы есть у ребёнка в выбранной отрасли. Можно указать любимые предметы, хобби и желаемый формат работы."
+                    if state.get("user_type") == "parent"
+                    else "Расскажи, что тебе интересно в этой отрасли. Можно написать простыми словами: работа с детьми, дизайн, техника, код, помощь людям или что-то своё."
+                ),
                 "profession",
                 [BACK_BUTTON, MAIN_MENU_BUTTON],
             )
@@ -1088,6 +1166,11 @@ class ScenarioService:
             query = f"{industry or ''}. {message}".strip()
             return self.show_specialties_for_profession(db, session, state, message, query=query)
 
+        if step == "profession_start" and message:
+            if self.looks_like_interest_description(message):
+                return self.show_interest_directions(db, session, state, message)
+            return self.show_specialties_for_profession(db, session, state, message)
+
         return self.profession_start(db, session, state, message)
 
     def profession_start(self, db: Session, session, state: dict[str, Any], message: str) -> ScenarioAnswer:
@@ -1100,7 +1183,11 @@ class ScenarioService:
             db,
             session,
             message,
-            "Выберите, как удобнее начать:",
+            (
+                "Выберите, как удобнее начать подбор направления для поступающего."
+                if state.get("user_type") == "parent"
+                else "Давай сначала выберем направление, а потом посмотрим колледжи. Как удобнее начать?"
+            ),
             "profession",
             PROFESSION_START_BUTTONS,
         )
@@ -1162,6 +1249,9 @@ class ScenarioService:
         if key == "education":
             entries = self.education_specialty_entries(db)
             title = "Педагогика и работа с детьми"
+        elif key == "jewelry":
+            entries = self.jewelry_specialty_entries(db)
+            title = "Ювелирное дело и декоративно-прикладное искусство"
         else:
             payload = self.chat_service.get_reference_catalog().industry_data().get("industries", {}).get(key, {})
             title = str(payload.get("title") or key)
@@ -1174,6 +1264,8 @@ class ScenarioService:
             if not specialty:
                 continue
             norm = normalize_label(specialty)
+            if key == "construction" and any(marker in norm for marker in CONSTRUCTION_EXCLUDE_WITHOUT_CONTEXT):
+                continue
             if norm in seen:
                 continue
             seen.add(norm)
@@ -1188,6 +1280,49 @@ class ScenarioService:
             if len(result) >= 8:
                 break
         return title, result
+
+    def jewelry_specialty_entries(self, db: Session) -> list[dict[str, Any]]:
+        docs = db.scalars(select(Document).where(Document.doc_type == "specialty")).all()
+        entries: list[dict[str, Any]] = []
+        seen: set[tuple[str, str]] = set()
+
+        for doc in docs:
+            entry = self.entry_from_doc(doc)
+            haystack = normalize_label(
+                " ".join(
+                    [
+                        entry.get("specialty", ""),
+                        " ".join(str(value) for value in entry.get("professions", [])),
+                        entry.get("college", ""),
+                    ]
+                )
+            )
+            if not any(marker in haystack for marker in JEWELRY_SPECIALTY_MARKERS):
+                continue
+            key = (self.chat_service.college_key(entry["college"]), normalize_label(entry["specialty"]))
+            if key in seen:
+                continue
+            seen.add(key)
+            entries.append(entry)
+
+        if entries:
+            return entries[:12]
+
+        for profession in [
+            "ювелир-закрепщик",
+            "ювелир-монтировщик",
+            "ювелир-огранщик природных камней",
+            "эксперт-оценщик ювелирных изделий",
+        ]:
+            for match in self.chat_service.get_reference_catalog().match_professions(profession, limit=1):
+                for raw in match.colleges:
+                    entry = self.entry_from_catalog(raw)
+                    key = (self.chat_service.college_key(entry["college"]), normalize_label(entry["specialty"]))
+                    if entry["college"] and entry["specialty"] and key not in seen:
+                        seen.add(key)
+                        entries.append(entry)
+
+        return entries[:12]
 
     def education_specialty_entries(self, db: Session) -> list[dict[str, Any]]:
         docs = db.scalars(select(Document).where(Document.doc_type == "specialty")).all()
@@ -1231,6 +1366,8 @@ class ScenarioService:
 
     def specialty_why(self, specialty: str) -> str:
         q = normalize_label(specialty)
+        if any(x in q for x in ["ювелир", "алмаз", "декоративно-приклад", "реставрац"]):
+            return "если интересны украшения, ручная работа, материалы и точные ремесленные навыки"
         if any(x in q for x in ["разработка", "программ", "систем", "информацион"]):
             return "если интересны технологии, логика и цифровые продукты"
         if any(x in q for x in ["дизайн", "живоп", "фото", "творч", "анимац"]):
@@ -1245,9 +1382,9 @@ class ScenarioService:
 
     def profession_unknown_prompt(self, db: Session, session, state: dict[str, Any], message: str) -> ScenarioAnswer:
         prompt = (
-            "Расскажите, что интересно поступающему: любимые предметы, хобби, сильные стороны, какой формат работы ему ближе."
+            "Расскажите, какие интересы есть у ребёнка. Можно указать любимые предметы, хобби и желаемое направление. Я предложу подходящие варианты и объясню, что стоит проверить дополнительно."
             if state.get("user_type") == "parent"
-            else "Расскажи немного о себе: какие предметы нравятся, какие есть хобби, что получается лучше всего, хочешь работать с людьми, техникой, творчеством или документами."
+            else "Расскажи, что тебе интересно. Можно написать простыми словами: любимые предметы, хобби, что получается лучше всего. Если пока не знаешь — ничего страшного, начнём с интересов."
         )
         self.session_service.update_route_state(
             db,
@@ -1258,6 +1395,16 @@ class ScenarioService:
 
     def show_interest_directions(self, db: Session, session, state: dict[str, Any], message: str) -> ScenarioAnswer:
         directions = self.infer_directions(message)
+        if not directions:
+            answer = (
+                "Пока не могу уверенно отнести это к одной отрасли.\n\n"
+                "Расскажите чуть подробнее: ребёнку ближе работа с людьми, детьми, техникой, творчеством, IT, медициной, правом, финансами, строительством или сервисом?"
+                if state.get("user_type") == "parent"
+                else "Пока не могу уверенно отнести это к одной отрасли.\n\n"
+                "Напиши чуть подробнее: тебе ближе работа с людьми, детьми, техникой, творчеством, IT, медициной, правом, финансами, строительством или сервисом?"
+            )
+            return self.save_direct(db, session, message, answer, "profession", ["Уточнить интересы", "Выбрать отрасль", MAIN_MENU_BUTTON])
+
         items = []
         for key, why in directions:
             title, specialties = self.industry_specialty_options(db, key)
@@ -1305,17 +1452,32 @@ class ScenarioService:
                 seen.add(key)
             if len(found) >= 4:
                 break
-        if not found:
-            found = [
-                ("it", "можно начать с цифровых навыков и понять, насколько подходят технологии"),
-                ("design", "можно попробовать творческие специальности и визуальные проекты"),
-                ("tourism", "можно посмотреть направления с общением, сервисом и организацией"),
-            ]
         return found[:4]
+
+    def looks_like_interest_description(self, text: str) -> bool:
+        q = normalize_label(text)
+        return any(
+            marker in q
+            for marker in [
+                "нрав",
+                "любл",
+                "интерес",
+                "хобби",
+                "получается",
+                "работать",
+                "заниматься",
+                "предмет",
+                "хочу помогать",
+            ]
+        )
 
     def is_cyber_query(self, text: str) -> bool:
         q = normalize_label(text)
         return any(term in q for term in CYBER_QUERY_TERMS)
+
+    def is_jewelry_query(self, text: str) -> bool:
+        q = normalize_label(text)
+        return any(term in q for term in JEWELRY_QUERY_TERMS)
 
     def cyber_clarification_answer(self, state: dict[str, Any]) -> str:
         if state.get("user_type") == "parent":
@@ -1365,6 +1527,71 @@ class ScenarioService:
             marker in q for marker in ["поступ", "зачисл", "колледж"]
         )
 
+    def has_ovz_exam_query(self, text: str) -> bool:
+        q = normalize_label(text)
+        has_ovz = any(marker in q for marker in ["овз", "инвалид", "особые услов", "специальные услов", "не могу сдавать", "не могу проходить"])
+        has_exam = any(marker in q for marker in ["вступитель", "испытан", "экзам", "сдавать"])
+        return has_ovz and has_exam
+
+    def has_general_exam_query(self, text: str) -> bool:
+        q = normalize_label(text)
+        has_exam = any(marker in q for marker in ["вступитель", "испытан", "экзам", "ви "])
+        return has_exam and not self.has_ovz_exam_query(text)
+
+    def admission_topic_from_text(self, text: str) -> str | None:
+        q = normalize_label(text)
+        if q in ADMISSION_LABEL_TO_SLUG:
+            return ADMISSION_LABEL_TO_SLUG[q]
+        if self.has_svo_priority_query(text):
+            return "svo_priority"
+        if self.has_general_exam_query(text) or self.has_ovz_exam_query(text):
+            return "ovz" if self.has_ovz_exam_query(text) else "exams"
+        if any(marker in q for marker in ["овз", "инвалид", "специальные услов", "особые услов"]):
+            return "ovz"
+        if "документ" in q:
+            return "documents"
+        if any(marker in q for marker in ["арм", "отсроч", "военком", "призыв"]):
+            return "army"
+        if any(marker in q for marker in ["срок", "когда", "до какого", "последний день"]):
+            return "deadlines"
+        if any(marker in q for marker in ["бюджет", "конкурс", "мест"]):
+            return "budget"
+        if any(marker in q for marker in ["заявлен", "подать", "mos.ru", "мос.ру"]):
+            return "application"
+        return None
+
+    def related_admission_labels(self, topic: str | None) -> list[str]:
+        if not topic:
+            return []
+        return list(ADMISSION_RELATED_TOPICS.get(topic, []))
+
+    def admission_suggestions(self, topic: str | None) -> list[str]:
+        suggestions = self.related_admission_labels(topic)
+        suggestions.extend(["Другой вопрос про поступление", MAIN_MENU_BUTTON])
+        return suggestions
+
+    def append_related_admission_topics(self, answer: str, topic: str | None) -> str:
+        labels = self.related_admission_labels(topic)
+        if not labels:
+            return answer
+        lines = [answer.rstrip(), "", "Можно ещё посмотреть:"]
+        for label in labels:
+            lines.append(f"- {label}")
+        return "\n".join(lines)
+
+    def render_general_exams_answer(self, state: dict[str, Any]) -> str:
+        if state.get("user_type") == "parent":
+            return (
+                "В моей базе нет полного перечня вступительных испытаний по всем колледжам и специальностям.\n\n"
+                "Условия могут зависеть от конкретного колледжа и выбранной специальности. "
+                "Я могу помочь подобрать колледж или специальность, а затем дать сайт и контакты приёмной комиссии, где лучше уточнить вступительные испытания."
+            )
+        return (
+            "В моей базе нет полного списка вступительных испытаний по всем колледжам и специальностям.\n\n"
+            "Обычно такие условия зависят от конкретного колледжа и специальности. "
+            "Я могу помочь выбрать колледж или специальность, а потом дать сайт и контакты, где можно проверить вступительные испытания."
+        )
+
     def render_svo_priority_answer(self, state: dict[str, Any]) -> str:
         prefix = (
             "В базе есть информация о первоочередном праве зачисления для отдельных категорий."
@@ -1382,10 +1609,10 @@ class ScenarioService:
         ]
         if state.get("user_type") == "parent":
             lines.append("")
-            lines.append("Я не могу по одному сообщению подтвердить, что право точно положено именно в вашей ситуации.")
+            lines.append("По одному сообщению нельзя точно подтвердить, относится ли ваша ситуация к этой категории. Рекомендую уточнить статус и перечень документов в приёмной комиссии выбранного колледжа.")
         else:
             lines.append("")
-            lines.append("Я не могу по одному сообщению точно сказать, что это право положено именно тебе или твоей семье.")
+            lines.append("По одному сообщению я не смогу точно сказать, положено ли преимущество именно в твоей ситуации. Лучше проверить это в приёмной комиссии колледжа.")
         return "\n".join(lines)
 
     def render_olympiad_benefit_answer(self, state: dict[str, Any]) -> str:
@@ -1519,6 +1746,19 @@ class ScenarioService:
                     "profession",
                     ["Защита информации", "Сети и администрирование", "Программирование", "Изменить запрос", MAIN_MENU_BUTTON],
                 )
+            if self.is_jewelry_query(search_query):
+                answer = (
+                    "В моей базе нет прямого варианта по этому ювелирному запросу. "
+                    "Можно посмотреть близкие творческие и ремесленные направления: декоративно-прикладное искусство, реставрацию, дизайн или работу с материалами."
+                )
+                return self.save_direct(
+                    db,
+                    session,
+                    message,
+                    answer,
+                    "profession",
+                    ["Дизайн и творчество", "Изменить запрос", MAIN_MENU_BUTTON],
+                )
             answer = (
                 "Я не нашёл точные специальности по этой профессии в своей базе. "
                 "Попробуйте написать проще: например, программист, дизайнер, фотограф, педагог."
@@ -1543,6 +1783,8 @@ class ScenarioService:
         title = "Для этой профессии могут подойти такие специальности:"
         if self.is_cyber_query(search_query):
             title = "Если речь про легальную кибербезопасность, можно смотреть такие направления:"
+        elif self.is_jewelry_query(search_query):
+            title = "По ювелирному направлению в базе есть такие варианты:"
         return self.render_specialty_options_page(db, session, message, title)
 
     def find_specialty_options(self, db: Session, query: str, *, limit: int = 10) -> list[dict[str, Any]]:
@@ -1551,6 +1793,8 @@ class ScenarioService:
 
         if self.is_cyber_query(query):
             return self.find_specialty_options_by_markers(db, CYBER_SPECIALTY_MARKERS, limit=limit)
+        if self.is_jewelry_query(query):
+            return self.find_jewelry_specialty_options(db, limit=limit)
 
         for match in self.chat_service.get_reference_catalog().match_professions(query, limit=3):
             for raw in match.colleges:
@@ -1589,6 +1833,29 @@ class ScenarioService:
             if len(result) >= limit:
                 break
 
+        return result
+
+    def find_jewelry_specialty_options(self, db: Session, *, limit: int) -> list[dict[str, Any]]:
+        entries = self.jewelry_specialty_entries(db)
+        result: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for entry in entries:
+            specialty = str(entry.get("specialty") or "").strip()
+            if not specialty:
+                continue
+            norm = normalize_label(specialty)
+            if norm in seen:
+                continue
+            seen.add(norm)
+            result.append(
+                {
+                    "specialty": specialty,
+                    "why": self.specialty_why(specialty),
+                    "professions": [str(value).strip() for value in (entry.get("professions") or []) if str(value).strip()],
+                }
+            )
+            if len(result) >= limit:
+                break
         return result
 
     def find_specialty_options_by_markers(self, db: Session, markers: tuple[str, ...], *, limit: int) -> list[dict[str, Any]]:
@@ -1669,7 +1936,17 @@ class ScenarioService:
         top_k: int,
     ) -> ScenarioAnswer:
         step = state.get("route_step")
-        if action_code == "admission_start" or state.get("current_route") != "admission":
+        if action_code == "admission_start":
+            return self.admission_start(db, session, state, message)
+
+        if action_code.startswith("admission_topic:"):
+            topic = action_code.split(":", 1)[1]
+            query = ADMISSION_QUERIES.get(topic, message)
+            return self.answer_admission_question(db, session, state, message, query, top_k=top_k)
+
+        if state.get("current_route") != "admission":
+            if message:
+                return self.answer_admission_question(db, session, state, message, message, top_k=top_k)
             return self.admission_start(db, session, state, message)
 
         if action_code == "admission_other":
@@ -1679,11 +1956,6 @@ class ScenarioService:
                 {"current_route": "admission", "route_step": "awaiting_admission_question"},
             )
             return self.save_direct(db, session, message, "Напишите вопрос про поступление.", "admission", ["Главное меню"])
-
-        if action_code.startswith("admission_topic:"):
-            topic = action_code.split(":", 1)[1]
-            query = ADMISSION_QUERIES.get(topic, message)
-            return self.answer_admission_question(db, session, state, message, query, top_k=top_k)
 
         if step == "awaiting_admission_question" or message:
             return self.answer_admission_question(db, session, state, message, message, top_k=top_k)
@@ -1715,19 +1987,21 @@ class ScenarioService:
         *,
         top_k: int,
     ) -> ScenarioAnswer:
+        topic = self.admission_topic_from_text(original_message) or self.admission_topic_from_text(query)
         if self.has_svo_priority_query(query):
             self.session_service.update_route_state(
                 db,
                 session,
                 {"current_route": "admission", "route_step": "admission_answer"},
             )
+            answer = self.append_related_admission_topics(self.render_svo_priority_answer(state), "svo_priority")
             return self.save_direct(
                 db,
                 session,
                 original_message,
-                self.render_svo_priority_answer(state),
+                answer,
                 "admission",
-                ["Другой вопрос про поступление", MAIN_MENU_BUTTON],
+                self.admission_suggestions("svo_priority"),
             )
         if self.has_olympiad_benefit_query(query):
             self.session_service.update_route_state(
@@ -1735,25 +2009,44 @@ class ScenarioService:
                 session,
                 {"current_route": "admission", "route_step": "admission_answer"},
             )
+            answer = self.append_related_admission_topics(self.render_olympiad_benefit_answer(state), topic or "svo_priority")
             return self.save_direct(
                 db,
                 session,
                 original_message,
-                self.render_olympiad_benefit_answer(state),
+                answer,
                 "admission",
-                ["Другой вопрос про поступление", MAIN_MENU_BUTTON],
+                self.admission_suggestions(topic or "svo_priority"),
             )
-        return self.call_chat_service(
+        if self.has_general_exam_query(query):
+            self.session_service.update_route_state(
+                db,
+                session,
+                {"current_route": "admission", "route_step": "admission_answer"},
+            )
+            answer = self.append_related_admission_topics(self.render_general_exams_answer(state), "exams")
+            return self.save_direct(
+                db,
+                session,
+                original_message,
+                answer,
+                "admission",
+                ["Выбрать колледж", "Выбрать специальность", "Какие документы нужны", "Как подать заявление", MAIN_MENU_BUTTON],
+            )
+        answer = self.call_chat_service(
             db,
             session,
             state,
             query,
             original_message=original_message,
             route_updates={"current_route": "admission", "route_step": "admission_answer"},
-            suggestions=["Другой вопрос про поступление", "Главное меню"],
+            suggestions=self.admission_suggestions(topic),
             top_k=top_k,
             force_mode="admission",
         )
+        answer.answer = self.append_related_admission_topics(answer.answer, topic)
+        self.session_service.update_route_state(db, session, {"last_answer": answer.answer})
+        return answer
 
     def handle_custom(
         self,
@@ -1809,9 +2102,9 @@ class ScenarioService:
                 db,
                 session,
                 message,
-                self.render_svo_priority_answer(state),
+                self.append_related_admission_topics(self.render_svo_priority_answer(state), "svo_priority"),
                 "admission",
-                ["Другой вопрос про поступление", MAIN_MENU_BUTTON],
+                self.admission_suggestions("svo_priority"),
             )
 
         if self.is_cyber_query(message):
