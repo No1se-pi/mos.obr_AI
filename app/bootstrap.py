@@ -4,6 +4,7 @@ import time
 from sqlalchemy import func, select, text
 
 import app.db.chat_models  # noqa: F401 - registers chat tables in Base.metadata
+from app.db.chat_models import ensure_chat_session_runtime_schema
 from app.db.repository import Document, create_tables
 from app.db.session import SessionLocal, engine
 from app.ingest.ingest_pipeline import run_ingest
@@ -80,6 +81,7 @@ def main() -> None:
     setup_logger()
     wait_for_database()
     create_tables(engine)
+    ensure_chat_session_runtime_schema(engine)
     maybe_run_ingest()
 
     entrypoint = os.getenv("APP_ENTRYPOINT", "telegram").strip().lower()

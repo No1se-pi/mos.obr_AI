@@ -7,8 +7,6 @@ from dotenv import load_dotenv
 from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    KeyboardButton,
-    ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
     Update,
 )
@@ -23,6 +21,7 @@ from telegram.ext import (
 )
 
 from app.interfaces.tg_adapter import TelegramChatAdapter
+from app.services.scenario_service import END_SESSION_BUTTON, USER_TYPE_BUTTONS, action_for_label
 
 try:
     from app.config import get_settings
@@ -36,9 +35,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-START_DIALOG_CALLBACK = "start_dialog"
-END_SESSION_TEXT = "Закончить сессию"
+END_SESSION_TEXT = END_SESSION_BUTTON
 WAIT_TEXT = "Подожди пару секунд, я ещё дописываю предыдущий ответ."
+CALLBACK_PREFIX = "scn:"
 
 
 def load_bot_token() -> str:
@@ -63,19 +62,96 @@ def load_bot_token() -> str:
     )
 
 
-def start_inline_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        [[InlineKeyboardButton("Начать диалог", callback_data=START_DIALOG_CALLBACK)]]
-    )
+def telegram_button_label(label: str) -> str:
+    label = str(label)
+    lowered = label.lower()
+    if label == END_SESSION_TEXT:
+        return "✅ Завершить сессию"
+    if label in {"Главное меню", "Назад"}:
+        return f"🧭 {label}"
+    if "колледж" in lowered:
+        return f"🎓 {label}"
+    if any(word in lowered for word in ["профес", "специаль", "отрасл"]):
+        return f"📚 {label}"
+    if any(word in lowered for word in ["поступ", "документ", "заявлен", "срок", "льгот", "сво"]):
+        return f"📝 {label}"
+    if any(word in lowered for word in ["найти", "поиск", "изменить", "уточнить"]):
+        return f"🔎 {label}"
+    if any(word in lowered for word in ["контакт", "адрес"]):
+        return f"📞 {label}"
+    return label
 
 
-def active_session_keyboard() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        [[KeyboardButton(END_SESSION_TEXT)]],
-        resize_keyboard=True,
-        is_persistent=True,
-        input_field_placeholder="Напиши свой вопрос…",
-    )
+def scenario_keyboard(
+    suggestions: tuple[str, ...] | list[str],
+    *,
+    include_end: bool = True,
+) -> tuple[InlineKeyboardMarkup, dict[str, str]]:
+    rows: list[list[InlineKeyboardButton]] = []
+    current: list[InlineKeyboardButton] = []
+    callback_labels: dict[str, str] = {}
+
+    for label in suggestions:
+        if not label:
+            continue
+        action = action_for_label(str(label))
+        callback_data = f"{CALLBACK_PREFIX}{action}"
+        callback_labels[callback_data] = str(label)
+        current.append(InlineKeyboardButton(telegram_button_label(str(label)), callback_data=callback_data))
+        if len(current) == 2:
+            rows.append(current)
+            current = []
+    if current:
+        rows.append(current)
+    if include_end:
+        callback_data = f"{CALLBACK_PREFIX}end_session"
+        callback_labels[callback_data] = END_SESSION_TEXT
+        rows.append([InlineKeyboardButton(telegram_button_label(END_SESSION_TEXT), callback_data=callback_data)])
+
+    if not rows:
+        callback_data = f"{CALLBACK_PREFIX}end_session"
+        callback_labels[callback_data] = END_SESSION_TEXT
+        rows = [[InlineKeyboardButton(telegram_button_label(END_SESSION_TEXT), callback_data=callback_data)]]
+    return InlineKeyboardMarkup(rows), callback_labels
+
+
+def remember_callback_labels(context: ContextTypes.DEFAULT_TYPE, labels: dict[str, str]) -> None:
+    current = dict(context.user_data.get("callback_labels") or {})
+    current.update(labels)
+    context.user_data["callback_labels"] = current
+
+
+def callback_action_is_button_only(action: str) -> bool:
+    if action.startswith(("industry:", "pick:", "admission_topic:")):
+        return True
+    return action in {
+        "set_user_type_parent",
+        "set_user_type_applicant",
+        "main_menu",
+        "back",
+        "route_college",
+        "find_college",
+        "help_choose_college",
+        "college_contacts",
+        "college_specialties",
+        "college_admission",
+        "college_question",
+        "new_search",
+        "show_more_colleges",
+        "college_specialty_yes",
+        "college_specialty_no",
+        "college_specialty_unknown",
+        "route_profession",
+        "choose_industry",
+        "know_profession",
+        "unknown_profession",
+        "profession_industry_interest",
+        "show_colleges",
+        "show_more_specialties",
+        "route_admission",
+        "other_admission_question",
+        "route_custom",
+    }
 
 
 def is_generating(context: ContextTypes.DEFAULT_TYPE) -> bool:
@@ -94,41 +170,20 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     context.user_data["dialog_active"] = False
     context.user_data["is_generating"] = False
+    context.user_data["session_id"] = None
+    context.user_data["callback_labels"] = {}
+
+    reply_markup, callback_labels = scenario_keyboard(USER_TYPE_BUTTONS, include_end=False)
+    remember_callback_labels(context, callback_labels)
 
     await context.bot.send_message(
         chat_id=chat.id,
         text=adapter.start_text_html(),
         parse_mode=ParseMode.HTML,
-        reply_markup=start_inline_keyboard(),
+        reply_markup=reply_markup,
         disable_web_page_preview=True,
     )
-
-
-async def start_dialog_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    query = update.callback_query
-    if query is None or query.message is None:
-        return
-
-    await query.answer()
-
-    if is_generating(context):
-        await query.message.reply_text(WAIT_TEXT)
-        return
-
     context.user_data["dialog_active"] = True
-
-    await query.message.reply_text(
-        "Диалог начат. Напиши вопрос про колледжи, специальности или поступление.",
-        reply_markup=active_session_keyboard(),
-    )
-
-    await query.message.reply_text(
-        "Например:\n"
-        "• Хочу стать ML-инженером, что посоветуешь?\n"
-        "• Какие документы нужны для поступления?\n"
-        "• Расскажи про колледжи для дизайнеров",
-        disable_web_page_preview=True,
-    )
 
 
 async def text_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -144,7 +199,9 @@ async def text_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     if user_text == END_SESSION_TEXT:
         if is_generating(context):
-            await message.reply_text(WAIT_TEXT, reply_markup=active_session_keyboard())
+            reply_markup, callback_labels = scenario_keyboard([], include_end=True)
+            remember_callback_labels(context, callback_labels)
+            await message.reply_text(WAIT_TEXT, reply_markup=reply_markup)
             return
 
         session_id = context.user_data.get("session_id")
@@ -164,21 +221,19 @@ async def text_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             reply_markup=ReplyKeyboardRemove(),
             disable_web_page_preview=True,
         )
-        await message.reply_text(
-            "Когда будешь готов продолжить, нажми кнопку ниже.",
-            reply_markup=start_inline_keyboard(),
-        )
         return
 
     if not context.user_data.get("dialog_active"):
         await message.reply_text(
-            "Сначала нажми «Начать диалог».",
-            reply_markup=start_inline_keyboard(),
+            "Сначала нажмите /start.",
+            reply_markup=ReplyKeyboardRemove(),
         )
         return
 
     if is_generating(context):
-        await message.reply_text(WAIT_TEXT, reply_markup=active_session_keyboard())
+        reply_markup, callback_labels = scenario_keyboard([], include_end=True)
+        remember_callback_labels(context, callback_labels)
+        await message.reply_text(WAIT_TEXT, reply_markup=reply_markup)
         return
 
     set_generating(context, True)
@@ -199,10 +254,105 @@ async def text_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         chunks = answer.text_html_chunks or (answer.text_html,)
         for index, chunk in enumerate(chunks):
             is_last = index == len(chunks) - 1
+            reply_markup = None
+            if is_last:
+                reply_markup, callback_labels = scenario_keyboard(answer.suggestions, include_end=True)
+                remember_callback_labels(context, callback_labels)
             await message.reply_text(
                 text=chunk,
                 parse_mode=ParseMode.HTML,
-                reply_markup=active_session_keyboard() if is_last else None,
+                reply_markup=reply_markup,
+                disable_web_page_preview=False,
+            )
+    finally:
+        set_generating(context, False)
+
+
+async def callback_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    adapter = context.application.bot_data["chat_adapter"]
+    query = update.callback_query
+    user = update.effective_user
+    chat = update.effective_chat
+
+    if query is None or user is None or chat is None:
+        return
+
+    await query.answer()
+    data = query.data or ""
+    if not data.startswith(CALLBACK_PREFIX):
+        return
+
+    action = data[len(CALLBACK_PREFIX):]
+    label = str((context.user_data.get("callback_labels") or {}).get(data) or "")
+
+    if action == "end_session":
+        if is_generating(context):
+            await query.answer(WAIT_TEXT, show_alert=False)
+            return
+
+        session_id = context.user_data.get("session_id")
+        adapter.log_session_closed(
+            telegram_user_id=str(user.id),
+            telegram_chat_id=str(chat.id),
+            telegram_username=user.username,
+            session_id=session_id,
+        )
+        context.user_data["session_id"] = None
+        context.user_data["dialog_active"] = False
+        context.user_data["is_generating"] = False
+        context.user_data["callback_labels"] = {}
+
+        if query.message:
+            await query.message.reply_text(
+                adapter.session_closed_text_html(),
+                parse_mode=ParseMode.HTML,
+                reply_markup=ReplyKeyboardRemove(),
+                disable_web_page_preview=True,
+            )
+        return
+
+    if is_generating(context):
+        await query.answer(WAIT_TEXT, show_alert=False)
+        return
+
+    context.user_data["dialog_active"] = True
+    set_generating(context, True)
+
+    try:
+        if query.message:
+            try:
+                await query.message.edit_reply_markup(reply_markup=None)
+            except Exception:
+                logger.debug("Не удалось убрать inline-кнопки с прошлого сообщения", exc_info=True)
+
+        await context.bot.send_chat_action(chat_id=chat.id, action=ChatAction.TYPING)
+
+        action_to_send = action if callback_action_is_button_only(action) else None
+        user_text = "" if action_to_send else label
+        answer = adapter.process_user_message(
+            telegram_user_id=str(user.id),
+            telegram_chat_id=str(chat.id),
+            telegram_username=user.username,
+            user_text=user_text,
+            session_id=context.user_data.get("session_id"),
+            action=action_to_send,
+            callback_label=label,
+        )
+        context.user_data["session_id"] = answer.session_id
+        context.user_data["last_mode"] = answer.mode
+
+        chunks = answer.text_html_chunks or (answer.text_html,)
+        for index, chunk in enumerate(chunks):
+            is_last = index == len(chunks) - 1
+            reply_markup = None
+            if is_last:
+                reply_markup, callback_labels = scenario_keyboard(answer.suggestions, include_end=True)
+                remember_callback_labels(context, callback_labels)
+            await context.bot.send_message(
+                chat_id=chat.id,
+                text=chunk,
+                parse_mode=ParseMode.HTML,
+                reply_markup=reply_markup,
                 disable_web_page_preview=False,
             )
     finally:
@@ -217,8 +367,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "Команды:\n"
         "/start — начать\n"
         "/help — подсказка\n\n"
-        "Во время диалога можно нажать кнопку «Закончить сессию».",
-        reply_markup=start_inline_keyboard(),
+        "Во время диалога выбирайте inline-кнопки сценария или нажмите «Завершить сессию».",
     )
 
 
@@ -235,9 +384,7 @@ def main() -> None:
 
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(
-        CallbackQueryHandler(start_dialog_callback, pattern=f"^{START_DIALOG_CALLBACK}$")
-    )
+    application.add_handler(CallbackQueryHandler(callback_message))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_message))
 
     logger.info("Telegram bot started")

@@ -1,4 +1,5 @@
 import uuid
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -7,6 +8,20 @@ from app.db.chat_models import ChatMessage, ChatSession
 from app.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+DEFAULT_ROUTE_STATE: dict[str, Any] = {
+    "user_type": None,
+    "current_route": None,
+    "route_step": None,
+    "last_college": None,
+    "last_profession": None,
+    "last_industry": None,
+    "last_specialty": None,
+    "last_results": [],
+    "last_answer": None,
+    "tone_mode": None,
+}
 
 
 class SessionService:
@@ -28,6 +43,7 @@ class SessionService:
             session_id=str(uuid.uuid4()),
             user_id=user_id,
             title=title,
+            metadata_json=DEFAULT_ROUTE_STATE.copy(),
         )
         db.add(new_session)
         db.commit()
@@ -70,3 +86,34 @@ class SessionService:
         messages = list(db.scalars(stmt).all())
         messages.reverse()
         return messages
+
+    def get_route_state(self, session: ChatSession) -> dict[str, Any]:
+        raw = session.metadata_json or {}
+        if not isinstance(raw, dict):
+            raw = {}
+        state = DEFAULT_ROUTE_STATE.copy()
+        state.update(raw)
+        if state.get("user_type") in {"parent", "applicant"} and not state.get("tone_mode"):
+            state["tone_mode"] = state["user_type"]
+        return state
+
+    def update_route_state(
+        self,
+        db: Session,
+        session: ChatSession,
+        updates: dict[str, Any],
+    ) -> dict[str, Any]:
+        state = self.get_route_state(session)
+        state.update(updates)
+        session.metadata_json = state
+        db.add(session)
+        db.commit()
+        db.refresh(session)
+        return self.get_route_state(session)
+
+    def reset_route_state(self, db: Session, session: ChatSession) -> dict[str, Any]:
+        session.metadata_json = DEFAULT_ROUTE_STATE.copy()
+        db.add(session)
+        db.commit()
+        db.refresh(session)
+        return self.get_route_state(session)

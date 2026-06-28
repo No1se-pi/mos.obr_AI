@@ -18,12 +18,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select, text
 
 import app.db.chat_models  # noqa: F401 - registers chat tables
+from app.db.chat_models import ensure_chat_session_runtime_schema
 from app.config import get_settings
 from app.db.session import SessionLocal
 from app.db.repository import Document, create_tables
 from app.db.session import engine
 from app.logger import get_logger
-from app.services.chat_service import ChatService
+from app.services.scenario_service import ScenarioService
 from app.services.web_transcript_store import WebTranscriptStore
 
 logger = get_logger(__name__)
@@ -31,6 +32,7 @@ settings = get_settings()
 
 SESSION_TTL_MINUTES = 30
 DEMO_HTML_PATH = Path(__file__).with_name("demo_chat.html")
+WIDGET_JS_PATH = Path(__file__).with_name("mosobr-widget.js")
 LOGS_DIR = Path(os.getenv("LOGS_DIR", "/app/logs"))
 API_WAIT_FOR_DOCUMENTS = os.getenv("API_WAIT_FOR_DOCUMENTS", "1").strip().lower() not in {"0", "false", "no", "off"}
 OLLAMA_HEALTH_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_HEALTH_TIMEOUT_SECONDS", "2"))
@@ -57,6 +59,7 @@ app.add_middleware(
 def startup() -> None:
     wait_for_database()
     create_tables(engine)
+    ensure_chat_session_runtime_schema(engine)
     if API_WAIT_FOR_DOCUMENTS:
         wait_for_documents()
 
@@ -179,16 +182,16 @@ class ApiSessionState:
 
 
 site_sessions: dict[str, ApiSessionState] = {}
-_chat_service: ChatService | None = None
+_scenario_service: ScenarioService | None = None
 _web_transcripts: WebTranscriptStore | None = None
 
 
-def get_chat_service() -> ChatService:
-    global _chat_service
-    if _chat_service is None:
-        logger.info("[API] Инициализация ChatService")
-        _chat_service = ChatService()
-    return _chat_service
+def get_scenario_service() -> ScenarioService:
+    global _scenario_service
+    if _scenario_service is None:
+        logger.info("[API] Инициализация ScenarioService")
+        _scenario_service = ScenarioService()
+    return _scenario_service
 
 
 def get_web_transcripts() -> WebTranscriptStore:
@@ -257,12 +260,24 @@ class ChatRequest(BaseModel):
     user_id: str = Field(..., min_length=1, description="ID пользователя на сайте")
     message: str = Field(..., min_length=1, description="Сообщение пользователя")
     session_id: Optional[str] = Field(None, description="ID сессии, если уже есть")
+    route: Optional[str] = Field(None, description="Сценарный маршрут: college, profession, admission, custom")
+    action: Optional[str] = Field(None, description="Сценарное действие или код нажатой кнопки")
+    user_type: Optional[str] = Field(None, description="Тип пользователя: parent или applicant")
+
+
+class SuggestionItem(BaseModel):
+    label: str
+    action: str
 
 
 class ChatResponse(BaseModel):
     session_id: str
     mode: str
     answer: str
+    route: Optional[str] = None
+    step: Optional[str] = None
+    suggestions: list[SuggestionItem] = Field(default_factory=list)
+    suggestion_labels: list[str] = Field(default_factory=list)
     expired_previous_session: bool = False
 
 
@@ -339,11 +354,14 @@ def chat(request: ChatRequest) -> ChatResponse:
     try:
         db = SessionLocal()
         try:
-            result = get_chat_service().ask(
+            result = get_scenario_service().ask(
                 db=db,
                 user_id=f"site:{user_id}",
-                user_query=message,
+                message=message,
                 session_id=session_id,
+                route=request.route,
+                action=request.action,
+                user_type=request.user_type,
                 top_k=5,
             )
         finally:
@@ -362,6 +380,12 @@ def chat(request: ChatRequest) -> ChatResponse:
     new_session_id = str(result["session_id"])
     answer_mode = str(result.get("dialog_mode", "unknown"))
     answer_text = str(result["answer"])
+    suggestions = [
+        SuggestionItem(label=str(item.get("label") or ""), action=str(item.get("action") or ""))
+        for item in (result.get("suggestion_buttons") or [])
+        if isinstance(item, dict) and str(item.get("label") or "").strip()
+    ]
+    suggestion_labels = [str(item) for item in (result.get("suggestion_labels") or result.get("suggestions") or []) if str(item).strip()]
     site_sessions[user_id] = ApiSessionState(
         session_id=new_session_id,
         last_activity=now_utc(),
@@ -379,6 +403,10 @@ def chat(request: ChatRequest) -> ChatResponse:
         session_id=new_session_id,
         mode=answer_mode,
         answer=answer_text,
+        route=result.get("route"),
+        step=result.get("step"),
+        suggestions=suggestions,
+        suggestion_labels=suggestion_labels,
         expired_previous_session=expired,
     )
 
@@ -421,6 +449,17 @@ def demo() -> HTMLResponse:
     return HTMLResponse(
         "<h1>MosObr AI API</h1><p>Файл demo_chat.html не найден.</p>",
         status_code=200,
+    )
+
+
+@app.get("/static/mosobr-widget.js")
+def widget_js() -> FileResponse:
+    if not WIDGET_JS_PATH.exists():
+        raise HTTPException(status_code=404, detail="Widget file is missing")
+    return FileResponse(
+        path=str(WIDGET_JS_PATH),
+        media_type="application/javascript; charset=utf-8",
+        filename="mosobr-widget.js",
     )
 
 

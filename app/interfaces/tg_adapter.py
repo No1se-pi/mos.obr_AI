@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from app.core.singletons import get_chat_service
+from app.core.singletons import get_scenario_service
 from app.db.session import SessionLocal
 
 
@@ -25,7 +25,10 @@ class TgAnswer:
     text_html: str
     mode: str
     session_id: str | None
+    suggestions: tuple[str, ...] = ()
     text_html_chunks: tuple[str, ...] = ()
+    route: str | None = None
+    step: str | None = None
 
 
 class SessionTranscriptStore:
@@ -88,24 +91,21 @@ class SessionTranscriptStore:
 
 class TelegramChatAdapter:
     def __init__(self, *, transcript_dir: str = "logs/telegram_sessions") -> None:
-        self.chat_service = get_chat_service()
+        self.scenario_service = get_scenario_service()
         self.transcripts = SessionTranscriptStore(transcript_dir)
 
     def start_text_html(self) -> str:
         return (
-            "<b>Привет!</b>\n\n"
-            "Я тестовый помощник по колледжам Москвы.\n\n"
-            "<b>Что я умею:</b>\n"
-            "• подобрать колледжи и специальности\n"
-            "• ответить на вопросы про поступление\n"
-            "• кратко объяснить, кем можно работать после обучения\n\n"
-            "Нажми <b>«Начать диалог»</b> и просто напиши свой вопрос."
+            "Здравствуйте!\n\n"
+            "Я AI-помощник по колледжам Москвы. Помогаю выбрать колледж или профессию, "
+            "посмотреть специальности и разобраться с поступлением.\n\n"
+            "Кто вы?"
         )
 
     def session_closed_text_html(self) -> str:
         return (
             "Сессию завершил.\n\n"
-            "Когда захочешь продолжить, просто нажми <b>«Начать диалог»</b>."
+            "Когда захотите продолжить, нажмите /start."
         )
 
     def process_user_message(
@@ -116,23 +116,29 @@ class TelegramChatAdapter:
         telegram_username: str | None,
         user_text: str,
         session_id: str | None,
+        action: str | None = None,
+        callback_label: str | None = None,
     ) -> TgAnswer:
+        service_message = user_text if action is None else ""
+        logged_text = user_text or (f"[button] {callback_label or action}" if action else "")
         self.transcripts.append_event(
             platform_user_id=telegram_user_id,
             telegram_chat_id=telegram_chat_id,
             telegram_username=telegram_username,
             session_id=session_id,
             role="user",
-            text=user_text,
+            text=logged_text,
+            extra={"action": action, "callback_label": callback_label} if action else None,
         )
 
         db = SessionLocal()
         try:
-            result = self.chat_service.ask(
+            result = self.scenario_service.ask(
                 db=db,
                 user_id=telegram_user_id,
-                user_query=user_text,
+                message=service_message,
                 session_id=session_id,
+                action=action,
                 top_k=5,
             )
         finally:
@@ -141,6 +147,7 @@ class TelegramChatAdapter:
         answer_text = str(result["answer"])
         answer_mode = str(result.get("dialog_mode", "unknown"))
         new_session_id = str(result.get("session_id") or session_id or "")
+        suggestions = tuple(str(item) for item in (result.get("suggestions") or []) if str(item).strip())
 
         self.transcripts.append_event(
             platform_user_id=telegram_user_id,
@@ -150,6 +157,11 @@ class TelegramChatAdapter:
             role="assistant",
             text=answer_text,
             mode=answer_mode,
+            extra={
+                "route": result.get("route"),
+                "step": result.get("step"),
+                "suggestions": list(suggestions),
+            },
         )
 
         chunks = self.format_answer_chunks_html(answer_text)
@@ -157,7 +169,10 @@ class TelegramChatAdapter:
             text_html=chunks[0] if chunks else "",
             mode=answer_mode,
             session_id=new_session_id or None,
+            suggestions=suggestions,
             text_html_chunks=tuple(chunks),
+            route=str(result.get("route") or "") or None,
+            step=str(result.get("step") or "") or None,
         )
 
     def log_session_closed(

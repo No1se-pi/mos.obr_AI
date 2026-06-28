@@ -3,20 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MosObr AI Demo Chat</title>
+  <title>MosObr AI Widget Demo</title>
   <style>
     :root {
       color-scheme: light;
-      --bg: #f4f6fb;
-      --panel: #ffffff;
+      --bg: #f5f7fb;
+      --surface: #ffffff;
       --text: #172033;
       --muted: #667085;
-      --primary: #3b82f6;
-      --primary-dark: #2563eb;
-      --border: #d7ddea;
-      --bot: #eef4ff;
-      --user: #e8f8ef;
-      --danger: #ef4444;
+      --line: #d6dbe7;
+      --primary: #2457d6;
+      --primary-hover: #1d4ed8;
+      --ok: #15803d;
     }
 
     * { box-sizing: border-box; }
@@ -24,239 +22,171 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: Arial, sans-serif;
-      background: radial-gradient(circle at top, #eaf1ff 0, var(--bg) 45%, #eef2f8 100%);
+      background: var(--bg);
       color: var(--text);
+      font-family: Arial, sans-serif;
+    }
+
+    .layout {
+      width: min(1080px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 34px 0 120px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 420px;
+      gap: 28px;
+      align-items: start;
+    }
+
+    .workspace {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 28px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 15px;
+    }
+
+    .checks {
+      margin: 22px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 9px;
+      color: #344054;
+      font-size: 14px;
+    }
+
+    .checks li {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+    }
+
+    .mark {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ok);
+      flex: 0 0 auto;
+    }
+
+    .embed {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .embed-header {
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-
-    .page { width: min(980px, 100%); display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: center; }
-    .intro h1 { font-size: 38px; margin: 0 0 12px; }
-    .intro p { color: var(--muted); font-size: 18px; line-height: 1.5; max-width: 520px; }
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
-    .chip { border: 1px solid var(--border); background: #fff; padding: 8px 11px; border-radius: 999px; font-size: 14px; color: #344054; }
-
-    .chat-widget {
-      height: 660px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      box-shadow: 0 24px 70px rgba(26, 45, 79, .16);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .chat-header {
-      padding: 18px;
-      background: linear-gradient(135deg, #2563eb, #60a5fa);
-      color: #fff;
-    }
-    .chat-header strong { display: block; font-size: 18px; margin-bottom: 4px; }
-    .chat-header span { opacity: .9; font-size: 13px; }
-
-    .messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
+      justify-content: space-between;
       gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      background: #f9fafc;
     }
 
-    .message {
-      max-width: 88%;
-      padding: 11px 13px;
-      border-radius: 16px;
-      white-space: pre-wrap;
-      line-height: 1.38;
-      font-size: 14px;
-    }
-    .message.bot { align-self: flex-start; background: var(--bot); border-bottom-left-radius: 5px; }
-    .message.user { align-self: flex-end; background: var(--user); border-bottom-right-radius: 5px; }
-    .message.system { align-self: center; background: transparent; color: var(--muted); font-size: 12px; padding: 4px; }
+    .embed-header strong { font-size: 15px; }
 
-    .toolbar {
-      display: flex;
-      gap: 8px;
-      padding: 0 14px 12px;
-    }
-    .toolbar button {
-      border: 1px solid var(--border);
-      background: #fff;
-      color: #344054;
-      border-radius: 999px;
-      padding: 8px 10px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    .toolbar button:hover { background: #f8fafc; }
-
-    .input-row {
-      border-top: 1px solid var(--border);
-      padding: 12px;
-      display: flex;
-      gap: 8px;
-      background: #fff;
-    }
-
-    input {
-      flex: 1;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px;
-      font-size: 14px;
-      outline: none;
-    }
-    input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, .12); }
-
-    button.send {
-      border: none;
+    .copy {
+      border: 0;
+      border-radius: 8px;
       background: var(--primary);
       color: #fff;
-      border-radius: 14px;
-      padding: 0 16px;
-      cursor: pointer;
+      padding: 9px 12px;
       font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
     }
-    button.send:hover { background: var(--primary-dark); }
-    button.send:disabled { opacity: .55; cursor: not-allowed; }
 
-    .status { font-size: 12px; color: var(--muted); padding: 0 16px 10px; }
+    .copy:hover { background: var(--primary-hover); }
 
-    @media (max-width: 860px) {
-      .page { grid-template-columns: 1fr; }
-      .intro { display: none; }
-      body { padding: 10px; }
-      .chat-widget { height: calc(100vh - 20px); }
+    pre {
+      margin: 0;
+      padding: 14px;
+      overflow: auto;
+      background: #101828;
+      color: #e4e7ec;
+      font: 13px/1.5 Consolas, "Courier New", monospace;
+      white-space: pre;
+    }
+
+    .status {
+      padding: 10px 14px;
+      color: var(--muted);
+      font-size: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    @media (max-width: 880px) {
+      .layout {
+        width: min(100% - 20px, 680px);
+        grid-template-columns: 1fr;
+        padding-top: 18px;
+      }
     }
   </style>
 </head>
 <body>
-  <main class="page">
-    <section class="intro">
+  <main class="layout">
+    <section class="workspace">
       <h1>AI-помощник по колледжам Москвы</h1>
-      <p>Демо-окно показывает, как сайт может обращаться к backend API. Сессия хранится в браузере, ответы приходят из локального RAG + LLM ядра.</p>
-      <div class="chips">
-        <span class="chip">POST /api/chat</span>
-        <span class="chip">session_id</span>
-        <span class="chip">RAG</span>
-        <span class="chip">Telegram-ready core</span>
-      </div>
+      <p>Откройте виджет в правом нижнем углу и пройдите сценарий: сначала выбор роли, затем один из четырёх маршрутов.</p>
+      <ul class="checks">
+        <li><span class="mark"></span><span>Родитель / абитуриент</span></li>
+        <li><span class="mark"></span><span>Выбор колледжа</span></li>
+        <li><span class="mark"></span><span>Выбор профессии</span></li>
+        <li><span class="mark"></span><span>Поступление и свой вопрос</span></li>
+      </ul>
     </section>
 
-    <section class="chat-widget">
-      <div class="chat-header">
-        <strong>Помощник по профориентации</strong>
-        <span>Спроси про колледжи, специальности или поступление</span>
+    <section class="embed">
+      <div class="embed-header">
+        <strong>Код для сайта</strong>
+        <button class="copy" type="button" onclick="copyEmbed()">Скопировать</button>
       </div>
+      <pre id="embedCode">&lt;script src="http://localhost:8000/static/mosobr-widget.js"&gt;&lt;/script&gt;
 
-      <div id="messages" class="messages"></div>
-
-      <div class="toolbar">
-        <button onclick="quick('Расскажи про КАИТ 20')">КАИТ 20</button>
-        <button onclick="quick('Какие документы нужны для поступления?')">Документы</button>
-        <button onclick="quick('Я не знаю, кем хочу быть')">Профориентация</button>
-        <button onclick="resetSession()">Новая сессия</button>
-      </div>
-
-      <div class="status" id="status">Готов к диалогу</div>
-
-      <form class="input-row" onsubmit="sendMessage(event)">
-        <input id="messageInput" autocomplete="off" placeholder="Напиши вопрос…" />
-        <button class="send" id="sendButton" type="submit">➜</button>
-      </form>
+&lt;script&gt;
+  MosobrWidget.init({
+    apiUrl: "http://localhost:8000/api/chat",
+    title: "AI-помощник по колледжам"
+  });
+&lt;/script&gt;</pre>
+      <div class="status" id="copyStatus">Готово для вставки в HTML страницы.</div>
     </section>
   </main>
 
+  <script src="/static/mosobr-widget.js"></script>
   <script>
-    const API_BASE = window.location.origin;
-    const messages = document.getElementById('messages');
-    const input = document.getElementById('messageInput');
-    const button = document.getElementById('sendButton');
-    const statusEl = document.getElementById('status');
+    const widget = MosobrWidget.init({
+      apiUrl: window.location.origin + "/api/chat",
+      title: "AI-помощник по колледжам"
+    });
+    widget.open();
 
-    let userId = localStorage.getItem('mosobr_user_id');
-    if (!userId) {
-      userId = 'site_' + crypto.randomUUID();
-      localStorage.setItem('mosobr_user_id', userId);
-    }
-
-    let sessionId = localStorage.getItem('mosobr_session_id');
-
-    addMessage('bot', 'Привет! Я помогу подобрать колледж или ответить на вопрос про поступление.');
-
-    function addMessage(role, text) {
-      const el = document.createElement('div');
-      el.className = 'message ' + role;
-      el.textContent = text;
-      messages.appendChild(el);
-      messages.scrollTop = messages.scrollHeight;
-    }
-
-    function setLoading(value) {
-      button.disabled = value;
-      input.disabled = value;
-      statusEl.textContent = value ? 'ИИ думает…' : 'Готов к диалогу';
-    }
-
-    function quick(text) {
-      input.value = text;
-      input.focus();
-    }
-
-    async function sendMessage(event) {
-      event.preventDefault();
-      const text = input.value.trim();
-      if (!text) return;
-
-      addMessage('user', text);
-      input.value = '';
-      setLoading(true);
-
+    async function copyEmbed() {
+      const code = document.getElementById("embedCode").textContent;
+      const status = document.getElementById("copyStatus");
       try {
-        const response = await fetch(API_BASE + '/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userId, session_id: sessionId, message: text })
-        });
-
-        if (!response.ok) {
-          throw new Error('HTTP ' + response.status);
-        }
-
-        const data = await response.json();
-        sessionId = data.session_id;
-        localStorage.setItem('mosobr_session_id', sessionId);
-
-        if (data.expired_previous_session) {
-          addMessage('system', 'Предыдущая сессия устарела, начата новая.');
-        }
-
-        addMessage('bot', data.answer);
-        statusEl.textContent = 'Режим: ' + data.mode;
-      } catch (error) {
-        addMessage('system', 'Ошибка API: ' + error.message);
-      } finally {
-        setLoading(false);
-        input.focus();
+        await navigator.clipboard.writeText(code);
+        status.textContent = "Код скопирован.";
+      } catch (_) {
+        status.textContent = "Не удалось скопировать автоматически. Выделите код вручную.";
       }
-    }
-
-    async function resetSession() {
-      try {
-        await fetch(API_BASE + '/api/session/reset', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userId, session_id: sessionId })
-        });
-      } catch (_) {}
-      sessionId = null;
-      localStorage.removeItem('mosobr_session_id');
-      addMessage('system', 'Сессия сброшена. Следующее сообщение начнёт новый диалог.');
     }
   </script>
 </body>

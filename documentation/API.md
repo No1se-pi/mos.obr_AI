@@ -57,7 +57,10 @@ Request:
 {
   "user_id": "site_user_123",
   "message": "Расскажи про КАИТ 20",
-  "session_id": null
+  "session_id": null,
+  "route": null,
+  "action": null,
+  "user_type": null
 }
 ```
 
@@ -66,12 +69,101 @@ Response:
 ```json
 {
   "session_id": "uuid",
-  "mode": "detail",
-  "answer": "..."
+  "mode": "college",
+  "answer": "...",
+  "route": "college",
+  "step": "college_found",
+  "suggestions": [
+    {"label": "Контакты и адреса", "action": "college_contacts"},
+    {"label": "Все специальности", "action": "college_specialties"},
+    {"label": "Порядок поступления", "action": "college_admission"},
+    {"label": "Главное меню", "action": "main_menu"}
+  ],
+  "suggestion_labels": [
+    "Контакты и адреса",
+    "Все специальности",
+    "Порядок поступления",
+    "Главное меню"
+  ],
+  "expired_previous_session": false
 }
 ```
 
 `session_id` нужно хранить на стороне сайта и передавать в следующих запросах. Так бот понимает уточнения: "подробнее", "давай проще", "а какие еще колледжи?".
+
+### Сценарные Поля
+
+`route` и `action` необязательны. Старый клиент может отправлять только `user_id`, `message`, `session_id`: API либо продолжит через сценарный роутинг, либо попросит выбрать роль и маршрут.
+
+`suggestions` возвращаются как массив объектов `{label, action}`. `label` можно показать на кнопке, `action` нужно отправлять в следующий `/api/chat` вместе с `message` и `session_id`. Для старых UI дополнительно есть `suggestion_labels` - список только из текстов кнопок.
+
+Поддерживаемые `route`:
+- `college` - выбор или поиск колледжа.
+- `profession` - выбор профессии, отрасли или специальности.
+- `admission` - FAQ по поступлению.
+- `custom` - свой вопрос с перенаправлением в подходящий маршрут.
+
+`user_type`:
+- `parent` - родитель, более официальный тон.
+- `applicant` - абитуриент, более простой тон.
+
+Частые `action`:
+- `set_user_type_parent`, `set_user_type_applicant`;
+- `route_college`, `route_profession`, `route_admission`, `route_custom`;
+- `industry:education`, `industry:it`;
+- `pick:1`, `pick:2`, `pick:3`;
+- `show_more_specialties`, `show_more_colleges`;
+- `main_menu`, `back`.
+
+Пример route-based запроса:
+
+```json
+{
+  "user_id": "site_user_123",
+  "session_id": "optional",
+  "message": "КАИТ 20",
+  "route": "college",
+  "action": "search_college",
+  "user_type": "applicant"
+}
+```
+
+Пример ответа:
+
+```json
+{
+  "session_id": "uuid",
+  "mode": "profession",
+  "answer": "В отрасли «Педагогика и работа с детьми» могут подойти такие специальности...",
+  "route": "profession",
+  "step": "industry_specialties",
+  "suggestions": [
+    {"label": "1. Подробнее", "action": "pick:1"},
+    {"label": "2. Подробнее", "action": "pick:2"},
+    {"label": "Показать ещё специальности", "action": "show_more_specialties"},
+    {"label": "Главное меню", "action": "main_menu"}
+  ],
+  "suggestion_labels": [
+    "1. Подробнее",
+    "2. Подробнее",
+    "Показать ещё специальности",
+    "Главное меню"
+  ],
+  "expired_previous_session": false
+}
+```
+
+Состояние маршрута хранится на backend в `chat_sessions.metadata_json`. Минимальные поля:
+- `user_type`
+- `current_route`
+- `route_step`
+- `last_college`
+- `last_profession`
+- `last_industry`
+- `last_specialty`
+- `last_results`
+- `last_answer`
+- `tone_mode`
 
 ## POST /api/session/close
 
@@ -119,11 +211,32 @@ Response:
 
 ## GET /api/demo
 
-Открывает HTML-демо web-чата:
+Открывает HTML-демо сценарного web-виджета:
 
 ```text
 http://localhost:8000/api/demo
 ```
+
+## GET /static/mosobr-widget.js
+
+Отдаёт чистый JS-виджет без React и сборщика. Пример вставки:
+
+```html
+<script src="http://localhost:8000/static/mosobr-widget.js"></script>
+
+<script>
+  MosobrWidget.init({
+    apiUrl: "http://localhost:8000/api/chat",
+    title: "AI-помощник по колледжам"
+  });
+</script>
+```
+
+## Сложные Запросы И FAQ
+
+`/api/chat` умеет обрабатывать сообщения, где есть несколько смыслов. Например запрос про `МПК`, педагогику и преимущества за олимпиады будет разобран на основной блок про колледж/направление и отдельный блок про поступление.
+
+Запросы про СВО, детей участников СВО, мобилизованных, военнослужащих, вдов/вдовцов и первоочередное право зачисления отвечают кратко и осторожно: бот сообщает, что статус и категорию нужно подтверждать официальными документами, а точные правила и перечень документов нужно проверять в приёмной комиссии колледжа.
 
 ## GET /api/logs/list
 
