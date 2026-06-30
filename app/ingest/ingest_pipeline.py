@@ -8,6 +8,7 @@ from app.db.repository import Document
 from app.ingest.document_builder import build_all_documents
 from app.ingest.loader_faq import load_faq_json
 from app.ingest.loader_json import load_json_data
+from app.ingest.loader_weeek import load_weeek_knowledge_json
 from app.ingest.normalize import normalize_data
 from app.ingest.reference_indexes import write_reference_indexes
 from app.logger import get_logger
@@ -29,14 +30,17 @@ def run_ingest(db: Session) -> None:
     # 2. FAQ
     faq_documents = load_faq_json(settings.faq_data_path)
 
-    # 3. Объединяем всё
-    all_documents = college_documents + faq_documents
+    # 3. Публичная база знаний Weeek
+    weeek_documents = load_weeek_knowledge_json(settings.weeek_knowledge_path)
+
+    # 4. Объединяем всё
+    all_documents = college_documents + faq_documents + weeek_documents
     logger.info(f"Всего документов для ingest: {len(all_documents)}")
 
-    # 4. Embedder
+    # 5. Embedder
     embedder = Embedder()
 
-    # 5. Сначала считаем embeddings, не трогая рабочую таблицу.
+    # 6. Сначала считаем embeddings, не трогая рабочую таблицу.
     # Так API продолжает видеть старую базу, пока новая версия документов готовится.
     total = len(all_documents)
     prepared_documents: list[Document] = []
@@ -56,7 +60,7 @@ def run_ingest(db: Session) -> None:
         if idx % 50 == 0 or idx == total:
             logger.info(f"Подготовлено документов: {idx}/{total}")
 
-    # 6. Заменяем документы одной транзакцией. При сбое старая база не исчезает.
+    # 7. Заменяем документы одной транзакцией. При сбое старая база не исчезает.
     try:
         logger.info("Замена документов в БД одной транзакцией...")
         db.execute(delete(Document))

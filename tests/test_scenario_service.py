@@ -51,6 +51,22 @@ class ScenarioServiceTest(unittest.TestCase):
             "admission_topic:rules_2026",
         )
         self.assertEqual(
+            self.service.resolve_action(message="Правила приёма 2026/27", route=None, action=None),
+            "admission_topic:rules_2026",
+        )
+        self.assertEqual(
+            self.service.resolve_action(message="Приёмная кампания 2026/27", route=None, action=None),
+            "admission_topic:campaign_2026_2027",
+        )
+        self.assertEqual(
+            self.service.resolve_action(message="Льготы при поступлении", route=None, action=None),
+            "admission_topic:benefits",
+        )
+        self.assertEqual(
+            self.service.resolve_action(message="Поступление иностранцев", route=None, action=None),
+            "admission_topic:foreigners",
+        )
+        self.assertEqual(
             self.service.resolve_action(message="СВО и первоочередное право", route=None, action=None),
             "admission_topic:svo_priority",
         )
@@ -77,6 +93,29 @@ class ScenarioServiceTest(unittest.TestCase):
 
     def test_svo_topic_is_hidden_from_admission_buttons(self) -> None:
         self.assertNotIn("СВО и первоочередное право", ADMISSION_TOPIC_BUTTONS)
+        self.assertIn("Приёмная кампания 2026/27", ADMISSION_TOPIC_BUTTONS)
+        self.assertIn("Льготы при поступлении", ADMISSION_TOPIC_BUTTONS)
+        self.assertIn("Поступление иностранцев", ADMISSION_TOPIC_BUTTONS)
+
+    def test_admission_button_uses_topic_template(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+
+        service = ScenarioService(chat_service=FakeChatService())
+        first = service.ask(db, "u_admission", "Абитуриент / поступающий")
+        result = service.ask(
+            db,
+            "u_admission",
+            "",
+            session_id=first["session_id"],
+            action="admission_topic:application",
+        )
+
+        self.assertIn("Заявление на поступление подают электронно через mos.ru", result["answer"])
+        self.assertIn("Авторизоваться", result["answer"])
+        self.assertNotIn("8 495", result["answer"])
+        self.assertIn("Какие документы нужны", result["suggestions"])
 
     def test_first_role_answer_is_natural(self) -> None:
         applicant = self.service.main_menu_text({"user_type": "applicant"}, first_time=True)
@@ -240,6 +279,96 @@ class ScenarioServiceTest(unittest.TestCase):
         directions = self.service.infer_directions("Мне нравится работать с детьми и объяснять")
 
         self.assertEqual(directions[0][0], "education")
+
+    def test_interest_rules_include_production(self) -> None:
+        directions = self.service.infer_directions("Мне нравятся станки, производство, роботы и техника")
+
+        self.assertEqual(directions[0][0], "production")
+
+    def test_production_industry_uses_production_specialties(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+        db.add_all(
+            [
+                Document(
+                    doc_type="specialty",
+                    title="Мехатроника",
+                    content="",
+                    metadata_json={
+                        "college_name": "Промышленный колледж",
+                        "specialty_name": "Мехатроника и робототехника (по отраслям)",
+                        "professions": ["Техник-мехатроник"],
+                    },
+                    embedding_json=[],
+                ),
+                Document(
+                    doc_type="specialty",
+                    title="Технология машиностроения",
+                    content="",
+                    metadata_json={
+                        "college_name": "Технологический колледж",
+                        "specialty_name": "Технология машиностроения",
+                        "professions": ["Техник-технолог"],
+                    },
+                    embedding_json=[],
+                ),
+                Document(
+                    doc_type="specialty",
+                    title="Дошкольное образование",
+                    content="",
+                    metadata_json={
+                        "college_name": "Педагогический колледж",
+                        "specialty_name": "Дошкольное образование",
+                        "professions": ["Воспитатель"],
+                    },
+                    embedding_json=[],
+                ),
+            ]
+        )
+        db.commit()
+
+        service = ScenarioService(chat_service=FakeChatService())
+        title, items = service.industry_specialty_options(db, "production")
+        names = [item["specialty"] for item in items]
+
+        self.assertEqual(title, "Промышленность")
+        self.assertIn("Мехатроника и робототехника (по отраслям)", names)
+        self.assertIn("Технология машиностроения", names)
+        self.assertNotIn("Дошкольное образование", names)
+
+    def test_more_specialties_can_be_requested_twice(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+
+        service = ScenarioService(chat_service=FakeChatService())
+        session = service.session_service.get_or_create_session(db, "u_more")
+        items = [
+            {"specialty": f"Специальность {idx}", "why": "подходит по интересам", "professions": []}
+            for idx in range(1, 8)
+        ]
+        service.session_service.update_route_state(
+            db,
+            session,
+            {
+                "user_type": "applicant",
+                "tone_mode": "applicant",
+                "current_route": "profession",
+                "route_step": "profession_specialties",
+                "last_results": {"kind": "specialty_options", "query": "техника", "items": items, "offset": 0},
+            },
+        )
+
+        first = service.render_specialty_options_page(db, session, "", "Подходящие специальности:")
+        second = service.ask(db, "u_more", "", session_id=session.session_id, action="show_more_specialties")
+        third = service.ask(db, "u_more", "", session_id=session.session_id, action="show_more_specialties")
+
+        self.assertIn("1. Специальность", first.answer)
+        self.assertIn("4. Специальность", second["answer"])
+        self.assertIn("Показать ещё специальности", second["suggestions"])
+        self.assertIn("7. Специальность", third["answer"])
+        self.assertNotIn("Показать ещё специальности", third["suggestions"])
 
     def test_jewelry_interest_uses_relevant_specialties(self) -> None:
         engine = create_engine("sqlite:///:memory:")

@@ -24,6 +24,7 @@ class Settings(BaseSettings):
 
     data_path: str
     faq_data_path: str = "./data/faq_admission.json"
+    weeek_knowledge_path: str = "./data/weeek_knowledge.json"
     top_k: int = 5
 
     model_config = SettingsConfigDict(

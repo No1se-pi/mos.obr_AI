@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+from hashlib import blake2s
 
 from dotenv import load_dotenv
 from telegram import (
@@ -38,6 +39,95 @@ logger = logging.getLogger(__name__)
 END_SESSION_TEXT = END_SESSION_BUTTON
 WAIT_TEXT = "Подожди пару секунд, я ещё дописываю предыдущий ответ."
 CALLBACK_PREFIX = "scn:"
+TELEGRAM_CALLBACK_DATA_LIMIT = 64
+TELEGRAM_BUTTON_TEXT_LIMIT = 34
+TELEGRAM_WIDE_BUTTON_TEXT_LIMIT = 28
+
+TELEGRAM_BUTTON_LABEL_ALIASES = {
+    "Абитуриент / поступающий": "Абитуриент",
+    "Узнать о порядке поступления": "Поступление",
+    "Найти конкретный колледж": "Найти колледж",
+    "Помочь выбрать колледж": "Помочь выбрать",
+    "Контакты и адреса": "Контакты",
+    "Все специальности": "Специальности",
+    "Порядок поступления": "Поступление",
+    "Задать вопрос про этот колледж": "Вопрос про колледж",
+    "Да, специальность выбрана": "Да, выбрана",
+    "Нет, ещё выбираю": "Ещё выбираю",
+    "Не знаю, с чего начать": "Помоги начать",
+    "Я не знаю, что выбрать": "Помоги выбрать",
+    "Показать ещё колледжи": "Ещё колледжи",
+    "Показать ещё специальности": "Ещё специальности",
+    "Как подать заявление": "Заявление",
+    "Какие документы нужны": "Документы",
+    "Сроки поступления": "Сроки",
+    "Вступительные испытания": "Испытания",
+    "ОВЗ и специальные условия": "ОВЗ/условия",
+    "Отсрочка от армии": "Отсрочка",
+    "Бюджет и конкурс": "Бюджет/конкурс",
+    "Приёмная кампания 2026/27": "ПК 2026/27",
+    "Правила приёма в 2026 году": "Правила 2026",
+    "Правила приёма 2026/27": "Правила 2026/27",
+    "Льготы при поступлении": "Льготы",
+    "Поступление иностранцев": "Иностранцы",
+    "Другой вопрос про поступление": "Другой вопрос",
+    "IT и цифровые технологии": "IT",
+    "Педагогика и работа с детьми": "Педагогика",
+    "Медицина и социальная помощь": "Медицина/помощь",
+    "Промышленность": "Промышленность",
+    "Строительство и архитектура": "Строительство",
+    "Медиа и коммуникации": "Медиа",
+    "Выбрать другую отрасль": "Другая отрасль",
+}
+
+TELEGRAM_BUTTON_ICON_BY_LABEL = {
+    "Приёмная кампания 2026/27": "🧭",
+    "Как подать заявление": "📨",
+    "Какие документы нужны": "📄",
+    "Сроки поступления": "📅",
+    "Вступительные испытания": "🧪",
+    "ОВЗ и специальные условия": "♿",
+    "Льготы при поступлении": "🎖️",
+    "Поступление иностранцев": "🌍",
+    "Отсрочка от армии": "🛡️",
+    "Бюджет и конкурс": "💰",
+    "Правила приёма в 2026 году": "📜",
+    "Правила приёма 2026/27": "📜",
+    "IT и цифровые технологии": "💻",
+    "Дизайн и творчество": "🎨",
+    "Педагогика и работа с детьми": "🎒",
+    "Медицина и социальная помощь": "⚕️",
+    "Право и безопасность": "⚖️",
+    "Финансы и экономика": "💰",
+    "Туризм и сервис": "🧳",
+    "Промышленность": "🏭",
+    "Строительство и архитектура": "🏗️",
+    "Транспорт и логистика": "🚇",
+    "Медиа и коммуникации": "🎬",
+    "Другое": "🧭",
+    "Выбрать другую отрасль": "🧭",
+}
+
+
+def compact_telegram_button_text(label: str) -> str:
+    label = str(label)
+    text = TELEGRAM_BUTTON_LABEL_ALIASES.get(label, label)
+    if len(text) <= TELEGRAM_BUTTON_TEXT_LIMIT:
+        return text
+
+    cut = text.rfind(" ", 0, TELEGRAM_BUTTON_TEXT_LIMIT - 3)
+    if cut < TELEGRAM_BUTTON_TEXT_LIMIT // 2:
+        cut = TELEGRAM_BUTTON_TEXT_LIMIT - 3
+    return f"{text[:cut].rstrip()}..."
+
+
+def telegram_callback_data(action: str, label: str, index: int) -> str:
+    callback_data = f"{CALLBACK_PREFIX}{action}"
+    if len(callback_data.encode("utf-8")) <= TELEGRAM_CALLBACK_DATA_LIMIT:
+        return callback_data
+
+    digest = blake2s(str(label).encode("utf-8"), digest_size=5).hexdigest()
+    return f"{CALLBACK_PREFIX}label:{index}:{digest}"
 
 
 def load_bot_token() -> str:
@@ -63,14 +153,17 @@ def load_bot_token() -> str:
 
 
 def telegram_button_label(label: str) -> str:
-    label = str(label)
-    lowered = label.lower()
-    if label == END_SESSION_TEXT:
+    raw_label = str(label)
+    label = compact_telegram_button_text(raw_label)
+    lowered = f"{raw_label} {label}".lower()
+    if raw_label == END_SESSION_TEXT:
         return "✅ Завершить сессию"
-    if label == "Главное меню":
+    if raw_label == "Главное меню":
         return f"🏠 {label}"
-    if label == "Назад":
+    if raw_label == "Назад":
         return f"↩️ {label}"
+    if raw_label in TELEGRAM_BUTTON_ICON_BY_LABEL:
+        return f"{TELEGRAM_BUTTON_ICON_BY_LABEL[raw_label]} {label}"
     if any(word in lowered for word in ["родитель", "абитуриент", "поступающий"]):
         return f"👤 {label}"
     if any(word in lowered for word in ["свой вопрос", "другой вопрос", "задать вопрос"]):
@@ -97,9 +190,13 @@ def telegram_button_label(label: str) -> str:
         return f"🛡️ {label}"
     if any(word in lowered for word in ["бюджет", "конкурс"]):
         return f"💰 {label}"
-    if any(word in lowered for word in ["правила", "порядок поступления", "поступ"]):
+    if any(word in lowered for word in ["правила", "порядок поступления", "поступ", "приём", "прием"]):
         return f"📋 {label}"
     return label
+
+
+def telegram_button_is_wide(text: str) -> bool:
+    return len(text) > TELEGRAM_WIDE_BUTTON_TEXT_LIMIT
 
 
 def scenario_keyboard(
@@ -111,18 +208,29 @@ def scenario_keyboard(
     current: list[InlineKeyboardButton] = []
     callback_labels: dict[str, str] = {}
 
-    for label in suggestions:
+    def flush_current() -> None:
+        nonlocal current
+        if current:
+            rows.append(current)
+            current = []
+
+    for index, label in enumerate(suggestions, start=1):
         if not label:
             continue
         action = action_for_label(str(label))
-        callback_data = f"{CALLBACK_PREFIX}{action}"
+        callback_data = telegram_callback_data(action, str(label), index)
         callback_labels[callback_data] = str(label)
-        current.append(InlineKeyboardButton(telegram_button_label(str(label)), callback_data=callback_data))
+        button_text = telegram_button_label(str(label))
+        button = InlineKeyboardButton(button_text, callback_data=callback_data)
+        if telegram_button_is_wide(button_text):
+            flush_current()
+            rows.append([button])
+            continue
+
+        current.append(button)
         if len(current) == 2:
-            rows.append(current)
-            current = []
-    if current:
-        rows.append(current)
+            flush_current()
+    flush_current()
     if include_end:
         callback_data = f"{CALLBACK_PREFIX}end_session"
         callback_labels[callback_data] = END_SESSION_TEXT

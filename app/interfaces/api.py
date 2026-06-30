@@ -86,11 +86,20 @@ def get_document_counts() -> dict[str, int]:
     try:
         total = int(db.scalar(select(func.count()).select_from(Document)) or 0)
         faq = int(db.scalar(select(func.count()).select_from(Document).where(Document.doc_type == "faq")) or 0)
+        weeek = int(
+            db.scalar(
+                select(func.count())
+                .select_from(Document)
+                .where(Document.metadata_json["source_type"].as_string() == "weeek")
+            )
+            or 0
+        )
         college = int(db.scalar(select(func.count()).select_from(Document).where(Document.doc_type == "college")) or 0)
         specialty = int(db.scalar(select(func.count()).select_from(Document).where(Document.doc_type == "specialty")) or 0)
         return {
             "total": total,
             "faq": faq,
+            "weeek": weeek,
             "college": college,
             "specialty": specialty,
         }

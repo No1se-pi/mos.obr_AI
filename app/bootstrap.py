@@ -50,6 +50,17 @@ def document_type_count(doc_type: str) -> int:
         db.close()
 
 
+def document_source_count(source_type: str) -> int:
+    db = SessionLocal()
+    try:
+        stmt = select(func.count(Document.id)).where(
+            Document.metadata_json["source_type"].as_string() == source_type
+        )
+        return int(db.execute(stmt).scalar_one())
+    finally:
+        db.close()
+
+
 def maybe_run_ingest() -> None:
     mode = os.getenv("BOOTSTRAP_INGEST", "auto").strip().lower()
     if mode in {"0", "false", "no", "off", "never"}:
@@ -61,9 +72,12 @@ def maybe_run_ingest() -> None:
     if mode == "auto":
         total_documents = document_count()
         faq_documents = document_type_count("faq")
-        should_ingest = total_documents == 0 or faq_documents == 0
+        weeek_documents = document_source_count("weeek")
+        should_ingest = total_documents == 0 or faq_documents == 0 or weeek_documents == 0
         if total_documents > 0 and faq_documents == 0:
             logger.warning("FAQ documents are missing; auto ingest will rebuild documents")
+        if total_documents > 0 and weeek_documents == 0:
+            logger.warning("Weeek documents are missing; auto ingest will rebuild documents")
 
     if not should_ingest:
         logger.info("Skipping ingest: documents already exist")

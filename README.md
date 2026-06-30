@@ -17,7 +17,7 @@
 - Telegram-бот.
 - HTML-демо web-чата.
 - Docker Compose для `app`, `api`, `db`.
-- Загрузка колледжей и FAQ из `data/`.
+- Загрузка колледжей, FAQ и базы знаний Weeek из `data/`.
 - Embeddings на `BAAI/bge-m3`.
 - RAG-поиск: semantic similarity + keyword/domain rules.
 - Индексы `profession -> colleges` и `industry -> professions`.
@@ -40,7 +40,7 @@
 - `pgvector` есть в зависимостях, но текущий поиск еще хранит embeddings в JSON-поле и считает cosine similarity в Python.
 - Ollama не запускается внутри compose по умолчанию. Контейнеры обращаются к Ollama на хосте через `host.docker.internal`.
 - Первый запуск может быть долгим: скачивается embedding-модель и строятся векторы.
-- Качество ответов зависит от полноты `data/colleges.json` и `data/faq_admission.json`.
+- Качество ответов зависит от полноты `data/colleges.json`, `data/faq_admission.json` и `data/weeek_knowledge.json`.
 - Telegram-бот стартует только при валидном `TELEGRAM_BOT_TOKEN`.
 
 ## Быстрый Запуск
@@ -142,6 +142,12 @@ docker compose logs -f app
 docker compose logs -f api
 docker compose logs -f db
 docker compose build app api
+```
+
+Обновить локальную базу знаний Weeek:
+
+```powershell
+.\venv\Scripts\python.exe scripts\fetch_weeek_knowledge.py
 ```
 
 ## Логи

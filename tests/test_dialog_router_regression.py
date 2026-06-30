@@ -61,6 +61,18 @@ class DialogRouterRegressionTest(unittest.TestCase):
 
         self.assertEqual(decision.mode, "faq")
 
+    def test_foreign_applicant_question_is_faq(self) -> None:
+        decision = self.router.route("Как поступать иностранным гражданам?")
+
+        self.assertEqual(decision.mode, "faq")
+        self.assertTrue(decision.needs_retrieval)
+
+    def test_admission_campaign_question_is_faq(self) -> None:
+        decision = self.router.route("Что известно про приёмную кампанию 2026/27?")
+
+        self.assertEqual(decision.mode, "faq")
+        self.assertTrue(decision.needs_retrieval)
+
     def test_specialty_detail_question_is_not_chat(self) -> None:
         decision = self.router.route("Расскажи про Сестринское дело")
 

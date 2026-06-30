@@ -54,9 +54,13 @@ FAQ_TERMS = {
     "поступление",
     "поступить",
     "заявление",
+    "приём",
+    "прием",
     "сроки",
     "зачисление",
     "льготы",
+    "иностран",
+    "граждан",
     "овз",
     "инвалид",
     "отсрочка",
@@ -142,8 +146,12 @@ FAQ_ADMIN_TERMS = {
     "документ",
     "заявление",
     "срок",
+    "приём",
+    "прием",
     "зачисление",
     "льгот",
+    "иностран",
+    "граждан",
     "овз",
     "инвалид",
     "отсроч",
@@ -166,6 +174,10 @@ FAQ_ADMIN_TERMS = {
     "особые условия",
     "специальные условия",
     "правила поступ",
+    "правила приём",
+    "правила прием",
+    "приёмная кампания",
+    "приемная кампания",
 }
 
 DOMAIN_RECOMMEND_TERMS = {
@@ -385,7 +397,6 @@ class DialogRouter:
         self.llm_client = llm_client or OllamaClient()
 
     def route(self, user_query: str, history_messages: list | None = None) -> RouterDecision:
-        q = normalize_text(user_query)
         history_messages = history_messages or []
 
         hard = self._hard_route(user_query, history_messages)
