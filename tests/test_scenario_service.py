@@ -10,8 +10,9 @@ from app.services.session_service import SessionService
 
 
 class FakeChatService:
-    def __init__(self) -> None:
+    def __init__(self, reference_catalog=None) -> None:
         self.session_service = SessionService()
+        self.reference_catalog = reference_catalog or FakeReferenceCatalog({})
 
     def canonical_college_from_db(self, db, text: str) -> str | None:
         return self.canonical_college_from_text(text)
@@ -31,6 +32,21 @@ class FakeChatService:
 
     def college_key(self, name: str) -> str:
         return name.lower().strip()
+
+    def get_reference_catalog(self):
+        return self.reference_catalog
+
+
+class FakeReferenceCatalog:
+    def __init__(self, industry_payload: dict) -> None:
+        self.industry_payload = industry_payload
+
+    def industry_data(self) -> dict:
+        return self.industry_payload
+
+    def match_professions(self, query: str, limit: int = 3) -> list:
+        _ = query, limit
+        return []
 
 
 class ScenarioServiceTest(unittest.TestCase):
@@ -348,6 +364,7 @@ class ScenarioServiceTest(unittest.TestCase):
             {"specialty": f"Специальность {idx}", "why": "подходит по интересам", "professions": []}
             for idx in range(1, 8)
         ]
+        items[0]["specialty_url"] = "https://colleges.shkolamoskva.ru/atlas/speczialnost-1"
         service.session_service.update_route_state(
             db,
             session,
@@ -365,10 +382,138 @@ class ScenarioServiceTest(unittest.TestCase):
         third = service.ask(db, "u_more", "", session_id=session.session_id, action="show_more_specialties")
 
         self.assertIn("1. Специальность", first.answer)
+        self.assertIn("https://colleges.shkolamoskva.ru/atlas/speczialnost-1", first.answer)
         self.assertIn("4. Специальность", second["answer"])
         self.assertIn("Показать ещё специальности", second["suggestions"])
         self.assertIn("7. Специальность", third["answer"])
         self.assertNotIn("Показать ещё специальности", third["suggestions"])
+
+    def test_more_specialties_action_overrides_stale_college_route(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+
+        service = ScenarioService(chat_service=FakeChatService())
+        session = service.session_service.get_or_create_session(db, "u_stale_route")
+        service.session_service.update_route_state(
+            db,
+            session,
+            {
+                "user_type": "applicant",
+                "tone_mode": "applicant",
+                "current_route": "college",
+                "route_step": "college_found",
+                "last_results": {
+                    "kind": "specialty_options",
+                    "query": "техника",
+                    "items": [
+                        {"specialty": f"Специальность {idx}", "why": "подходит", "professions": []}
+                        for idx in range(1, 5)
+                    ],
+                    "offset": 3,
+                },
+            },
+        )
+
+        result = service.ask(db, "u_stale_route", "", session_id=session.session_id, action="show_more_specialties")
+
+        self.assertIn("4. Специальность", result["answer"])
+        self.assertNotIn("Ты уже знаешь колледж", result["answer"])
+
+    def test_law_industry_keeps_college_specialty_pairs(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+        catalog = FakeReferenceCatalog(
+            {
+                "industries": {
+                    "law": {
+                        "title": "Право и безопасность",
+                        "college_specialties": [
+                            {"college": "Колледж полиции", "specialty": "Юриспруденция", "professions": ["Юрист"]},
+                            {"college": "Юридический колледж", "specialty": "Юриспруденция", "professions": ["Юрист"]},
+                            {"college": "Колледж полиции", "specialty": "Правоохранительная деятельность", "professions": ["Полицейский"]},
+                            {"college": "Колледж сервиса", "specialty": "Туризм и гостеприимство", "professions": ["Администратор"]},
+                        ],
+                    }
+                }
+            }
+        )
+
+        service = ScenarioService(chat_service=FakeChatService(reference_catalog=catalog))
+        _, items = service.industry_specialty_options(db, "law")
+
+        pairs = {(item["college"], item["specialty"]) for item in items}
+        self.assertIn(("Колледж полиции", "Юриспруденция"), pairs)
+        self.assertIn(("Юридический колледж", "Юриспруденция"), pairs)
+        self.assertIn(("Колледж полиции", "Правоохранительная деятельность"), pairs)
+        self.assertNotIn(("Колледж сервиса", "Туризм и гостеприимство"), pairs)
+
+    def test_law_industry_more_button_pages_through_colleges(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+        catalog = FakeReferenceCatalog(
+            {
+                "industries": {
+                    "law": {
+                        "title": "Право и безопасность",
+                        "college_specialties": [
+                            {"college": f"Юридический колледж {idx}", "specialty": "Юриспруденция", "professions": ["Юрист"]}
+                            for idx in range(1, 7)
+                        ],
+                    }
+                }
+            }
+        )
+
+        service = ScenarioService(chat_service=FakeChatService(reference_catalog=catalog))
+        session = service.session_service.get_or_create_session(db, "law_more")
+        service.session_service.update_route_state(
+            db,
+            session,
+            {"user_type": "applicant", "tone_mode": "applicant"},
+        )
+        first = service.show_industry_specialties(db, session, {}, "", "law")
+        second = service.ask(db, "law_more", "", session_id=session.session_id, action="show_more_specialties")
+
+        self.assertIn("Юридический колледж 1", first.answer)
+        self.assertIn("Показать ещё специальности", first.suggestions)
+        self.assertIn("Юридический колледж 4", second["answer"])
+        self.assertNotIn("Сначала нужно найти профессию", second["answer"])
+
+    def test_it_industry_filters_hospitality_on_more_pages(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+        catalog = FakeReferenceCatalog(
+            {
+                "industries": {
+                    "it": {
+                        "title": "IT и цифровые технологии",
+                        "college_specialties": [
+                            {"college": "ИТ.Москва", "specialty": "Веб-разработка", "professions": ["Веб-разработчик"]},
+                            {
+                                "college": "КАИТ 20",
+                                "specialty": "Разработка и управление программным обеспечением (Программист)",
+                                "professions": ["Программист"],
+                            },
+                            {"college": "Колледж 54", "specialty": "Сетевое и системное администрирование", "professions": ["Администратор"]},
+                            {"college": "Колледж гостеприимства", "specialty": "Туризм и гостеприимство", "professions": ["Администратор"]},
+                        ],
+                    }
+                }
+            }
+        )
+
+        service = ScenarioService(chat_service=FakeChatService(reference_catalog=catalog))
+        _, items = service.industry_specialty_options(db, "it")
+        names = [item["specialty"] for item in items]
+
+        self.assertIn("Веб-разработка", names)
+        self.assertIn("Разработка и управление программным обеспечением (Программист)", names)
+        self.assertIn("Сетевое и системное администрирование", names)
+        self.assertNotIn("Туризм и гостеприимство", names)
 
     def test_jewelry_interest_uses_relevant_specialties(self) -> None:
         engine = create_engine("sqlite:///:memory:")

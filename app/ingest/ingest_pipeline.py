@@ -11,6 +11,12 @@ from app.ingest.loader_json import load_json_data
 from app.ingest.loader_weeek import load_weeek_knowledge_json
 from app.ingest.normalize import normalize_data
 from app.ingest.reference_indexes import write_reference_indexes
+from app.ingest.source_fingerprint import (
+    DATA_FINGERPRINT_METADATA_KEY,
+    DATA_FINGERPRINT_VERSION,
+    DATA_FINGERPRINT_VERSION_METADATA_KEY,
+    current_data_fingerprint,
+)
 from app.logger import get_logger
 from app.rag.embedder import Embedder
 
@@ -36,6 +42,8 @@ def run_ingest(db: Session) -> None:
     # 4. Объединяем всё
     all_documents = college_documents + faq_documents + weeek_documents
     logger.info(f"Всего документов для ingest: {len(all_documents)}")
+    data_fingerprint = current_data_fingerprint(settings)
+    logger.info("Data fingerprint for ingest: %s", data_fingerprint)
 
     # 5. Embedder
     embedder = Embedder()
@@ -46,13 +54,16 @@ def run_ingest(db: Session) -> None:
     prepared_documents: list[Document] = []
     for idx, doc in enumerate(all_documents, start=1):
         embedding = embedder.encode(doc["title"] + "\n" + doc["content"])
+        metadata_json = dict(doc["metadata_json"])
+        metadata_json[DATA_FINGERPRINT_METADATA_KEY] = data_fingerprint
+        metadata_json[DATA_FINGERPRINT_VERSION_METADATA_KEY] = DATA_FINGERPRINT_VERSION
 
         prepared_documents.append(
             Document(
                 doc_type=doc["doc_type"],
                 title=doc["title"],
                 content=doc["content"],
-                metadata_json=doc["metadata_json"],
+                metadata_json=metadata_json,
                 embedding_json=embedding,
             )
         )

@@ -1,0 +1,2280 @@
+{
+  "source": "https://colleges.shkolamoskva.ru/atlas",
+  "fetched_at": "2026-06-30T05:21:24.665154+00:00",
+  "clusters": [
+    {
+      "key": "security",
+      "title": "Безопасность и право: специальности и профессии в колледжах и техникумах Москвы",
+      "url": "https://colleges.shkolamoskva.ru/atlas/cluster/security"
+    },
+    {
+      "key": "services",
+      "title": "Гостеприимство: специальности и профессии в колледжах и техникумах Москвы",
+      "url": "https://colleges.shkolamoskva.ru/atlas/cluster/services"
+    },
+    {
+      "key": "healthcare",
+      "title": "Здравоохранение: специальности и профессии в колледжах и техникумах Москвы",
+      "url": "https://colleges.shkolamoskva.ru/atlas/cluster/healthcare"
+    },
+    {
+      "key": "it",
+      "title": "Информационные технологии [ИТ] — специальности и профессии в колледжах и техникумах Москвы",
+      "url": "https://colleges.shkolamoskva.ru/atlas/cluster/it"
+    },
+    {
+      "key": "education",
+      "title": "Образование и социальная сфера: специальности и профессии в колледжах и техникумах Москвы",
+      "url": "https://colleges.shkolamoskva.ru/atlas/cluster/education"
+    },
+    {
+      "key": "creative",
+      "title": "Креативная индустрия: специальности и профессии в колледжах и техникумах Москвы",
+      "url": "https://colleges.shkolamoskva.ru/atlas/cluster/creative"
+    },
+    {
+      "key": "transport",
+      "title": "Транспорт: специальности и профессии в колледжах и техникумах Москвы",
+      "url": "https://colleges.shkolamoskva.ru/atlas/cluster/transport"
+    },
+    {
+      "key": "industry",
+      "title": "Промышленность: специальности и профессии в колледжах и техникумах Москвы",
+      "url": "https://colleges.shkolamoskva.ru/atlas/cluster/industry"
+    },
+    {
+      "key": "building",
+      "title": "Строительство: специальности и профессии в колледжах и техникумах Москвы",
+      "url": "https://colleges.shkolamoskva.ru/atlas/cluster/building"
+    },
+    {
+      "key": "finances",
+      "title": "Финансы и торговля: специальности и профессии в колледжах и техникумах Москвы",
+      "url": "https://colleges.shkolamoskva.ru/atlas/cluster/finances"
+    }
+  ],
+  "specialties": [
+    {
+      "name": "Защита в чрезвычайных ситуациях",
+      "slug": "zashhita-v-chrezvychajnyh-situacziyah",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/zashhita-v-chrezvychajnyh-situacziyah",
+      "cluster_key": "security",
+      "cluster_title": "Безопасность и право: специальности и профессии в колледжах и техникумах Москвы",
+      "professions": [
+        "Спасатель, пожарный",
+        "Специалист по гражданской обороне в организациях",
+        "Начальник караула, старший дежурной смены"
+      ],
+      "colleges": [
+        {
+          "name": "Технический пожарно-спасательный колледж имени Героя Российской Федерации В.М. Максимчука",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/tehnicheskij-pozharno-spasatelnyj-kolledzh-imeni-geroya-rossijskoj-federaczii-v-m-maksimchuka",
+          "slug": "tehnicheskij-pozharno-spasatelnyj-kolledzh-imeni-geroya-rossijskoj-federaczii-v-m-maksimchuka"
+        }
+      ]
+    },
+    {
+      "name": "Аппаратчик-оператор производства продуктов питания из растительного сырья",
+      "slug": "apparatchik-operator-proizvodstva-produktov-pitaniya-iz-rastitelnogo-syrya",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/apparatchik-operator-proizvodstva-produktov-pitaniya-iz-rastitelnogo-syrya",
+      "cluster_key": "services",
+      "cluster_title": "Гостеприимство: специальности и профессии в колледжах и техникумах Москвы",
+      "professions": [
+        "Оператор технологической линии",
+        "Бригадир в пекарне",
+        "Пекарь ремесленного хлеба"
+      ],
+      "colleges": [
+        {
+          "name": "Московский образовательный комплекс имени Виктора Талалихина",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-obrazovatelnyj-kompleks-imeni-viktora-talalihina",
+          "slug": "moskovskij-obrazovatelnyj-kompleks-imeni-viktora-talalihina"
+        }
+      ]
+    },
+    {
+      "name": "Акушерское дело",
+      "slug": "akusherskoe-delo",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/akusherskoe-delo",
+      "cluster_key": "healthcare",
+      "cluster_title": "Здравоохранение: специальности и профессии в колледжах и техникумах Москвы",
+      "professions": [
+        "Акушерка",
+        "Старший акушер/акушерка",
+        "Акушер"
+      ],
+      "colleges": [
+        {
+          "name": "Медицинский колледж № 7",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/gbpou-dzm-mediczinskij-kolledzh-7",
+          "slug": "gbpou-dzm-mediczinskij-kolledzh-7"
+        }
+      ]
+    },
+    {
+      "name": "Веб-разработка",
+      "slug": "veb-razrabotka",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/veb-razrabotka",
+      "cluster_key": "it",
+      "cluster_title": "Информационные технологии [ИТ] — специальности и профессии в колледжах и техникумах Москвы",
+      "professions": [
+        "Android-разработчик",
+        "Frontend-разработчик",
+        "Разработчик веб-приложений"
+      ],
+      "colleges": [
+        {
+          "name": "ИТ.Москва",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/it-moskva",
+          "slug": "it-moskva"
+        },
+        {
+          "name": "Колледж Архитектуры, Дизайна и Реинжиниринга № 26",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-arhitektury-dizajna-i-reinzhiniringa-26",
+          "slug": "kolledzh-arhitektury-dizajna-i-reinzhiniringa-26"
+        },
+        {
+          "name": "Колледж автоматизации и информационных технологий № 20",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-avtomatizaczii-i-informaczionnyh-tehnologij-20",
+          "slug": "kolledzh-avtomatizaczii-i-informaczionnyh-tehnologij-20"
+        },
+        {
+          "name": "Московский колледж бизнес-технологий",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-kolledzh-biznes-tehnologij",
+          "slug": "moskovskij-kolledzh-biznes-tehnologij"
+        },
+        {
+          "name": "Московский колледж управления, гостиничного бизнеса и информационных технологий «Царицыно»",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-kolledzh-upravleniya-gostinichnogo-biznesa-i-informaczionnyh-tehnologij-czariczyno",
+          "slug": "moskovskij-kolledzh-upravleniya-gostinichnogo-biznesa-i-informaczionnyh-tehnologij-czariczyno"
+        },
+        {
+          "name": "Колледж связи № 54 имени П.М. Вострухина",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-svyazi-54-imeni-p-m-vostruhina",
+          "slug": "kolledzh-svyazi-54-imeni-p-m-vostruhina"
+        },
+        {
+          "name": "Колледж предпринимательства № 11",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-predprinimatelstva-11-onezhskaya-3",
+          "slug": "kolledzh-predprinimatelstva-11-onezhskaya-3"
+        }
+      ]
+    },
+    {
+      "name": "Адаптивная физическая культура",
+      "slug": "adaptivnaya-fizicheskaya-kultura",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/adaptivnaya-fizicheskaya-kultura",
+      "cluster_key": "education",
+      "cluster_title": "Образование и социальная сфера: специальности и профессии в колледжах и техникумах Москвы",
+      "professions": [
+        "Тренер по адаптивному плаванию",
+        "Инструктор по физической культуре",
+        "Учитель адаптивной физической культуры"
+      ],
+      "colleges": [
+        {
+          "name": "Московский педагогический колледж",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-pedagogicheskij-kolledzh",
+          "slug": "moskovskij-pedagogicheskij-kolledzh"
+        },
+        {
+          "name": "Московский колледж социальных профессий имени Е.И. Холостовой",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-po-podgotovke-soczialnyh-rabotnikov",
+          "slug": "kolledzh-po-podgotovke-soczialnyh-rabotnikov"
+        },
+        {
+          "name": "Московский государственный университет спорта и туризма",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-gosudarstvennyj-universitet-sporta-i-turizma",
+          "slug": "moskovskij-gosudarstvennyj-universitet-sporta-i-turizma"
+        }
+      ]
+    },
+    {
+      "name": "Актерское искусство",
+      "slug": "akterskoe-masterstvo",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/akterskoe-masterstvo",
+      "cluster_key": "creative",
+      "cluster_title": "Креативная индустрия: специальности и профессии в колледжах и техникумах Москвы",
+      "professions": [
+        "Актер дубляжа",
+        "Начинающий актер",
+        "Руководитель театральной студии, школьного театра"
+      ],
+      "colleges": [
+        {
+          "name": "Киноколледж № 40 «Московская международная киношкола»",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kinokolledzh-40-moskovskaya-mezhdunarodnaya-kinoshkola",
+          "slug": "kinokolledzh-40-moskovskaya-mezhdunarodnaya-kinoshkola"
+        },
+        {
+          "name": "Московский театральный колледж имени Л.А. Филатова",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-teatralnyj-kolledzh-imeni-l-a-filatova",
+          "slug": "moskovskij-teatralnyj-kolledzh-imeni-l-a-filatova"
+        }
+      ]
+    },
+    {
+      "name": "Автоматика и телемеханика на транспорте (железнодорожном транспорте)",
+      "slug": "elektromonter-ustrojstv-signalizaczii-czentralizaczii-blokirovki-sczb",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/elektromonter-ustrojstv-signalizaczii-czentralizaczii-blokirovki-sczb",
+      "cluster_key": "transport",
+      "cluster_title": "Транспорт: специальности и профессии в колледжах и техникумах Москвы",
+      "professions": [
+        "Энергетик",
+        "Электромеханик",
+        "Начальник дистанции",
+        "железнодорожном транспорте"
+      ],
+      "colleges": [
+        {
+          "name": "Колледж Московского транспорта",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-moskovskogo-transporta",
+          "slug": "kolledzh-moskovskogo-transporta"
+        }
+      ]
+    },
+    {
+      "name": "Аддитивные технологии",
+      "slug": "additivnye-tehnologii",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/additivnye-tehnologii",
+      "cluster_key": "industry",
+      "cluster_title": "Промышленность: специальности и профессии в колледжах и техникумах Москвы",
+      "professions": [
+        "Разработчик управляющих программ",
+        "Специалист по контролю качества",
+        "Специалист по обратному проектированию"
+      ],
+      "colleges": [
+        {
+          "name": "Колледж предпринимательства № 11",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-predprinimatelstva-11-onezhskaya-3",
+          "slug": "kolledzh-predprinimatelstva-11-onezhskaya-3"
+        },
+        {
+          "name": "Московский колледж архитектуры и градостроительства",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-kolledzh-arhitektury-i-gradostroitelstva",
+          "slug": "moskovskij-kolledzh-arhitektury-i-gradostroitelstva"
+        },
+        {
+          "name": "Политехнический колледж № 8 имени дважды Героя Советского Союза И.Ф. Павлова",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/politehnicheskij-kolledzh-8-imeni-dvazhdy-geroya-sovetskogo-soyuza-i-f-pavlova",
+          "slug": "politehnicheskij-kolledzh-8-imeni-dvazhdy-geroya-sovetskogo-soyuza-i-f-pavlova"
+        },
+        {
+          "name": "Колледж современных технологий имени Героя Советского Союза М.Ф. Панова",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-sovremennyh-tehnologij-imeni-geroya-sovetskogo-soyuza-m-f-panova",
+          "slug": "kolledzh-sovremennyh-tehnologij-imeni-geroya-sovetskogo-soyuza-m-f-panova"
+        },
+        {
+          "name": "Московский государственный образовательный комплекс",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-gosudarstvennyj-obrazovatelnyj-kompleks",
+          "slug": "moskovskij-gosudarstvennyj-obrazovatelnyj-kompleks"
+        }
+      ]
+    },
+    {
+      "name": "Архитектура",
+      "slug": "arhitektura",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/arhitektura",
+      "cluster_key": "building",
+      "cluster_title": "Строительство: специальности и профессии в колледжах и техникумах Москвы",
+      "professions": [
+        "Архитектор",
+        "Архитектор по рабочей документации",
+        "Помощник архитектора (чертёжник)"
+      ],
+      "colleges": [
+        {
+          "name": "Колледж Архитектуры, Дизайна и Реинжиниринга № 26",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-arhitektury-dizajna-i-reinzhiniringa-26",
+          "slug": "kolledzh-arhitektury-dizajna-i-reinzhiniringa-26"
+        },
+        {
+          "name": "Московский колледж архитектуры и градостроительства",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-kolledzh-arhitektury-i-gradostroitelstva",
+          "slug": "moskovskij-kolledzh-arhitektury-i-gradostroitelstva"
+        },
+        {
+          "name": "Образовательный комплекс градостроительства «Столица»",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/obrazovatelnyj-kompleks-gradostroitelstva-stolicza",
+          "slug": "obrazovatelnyj-kompleks-gradostroitelstva-stolicza"
+        }
+      ]
+    },
+    {
+      "name": "Банковское дело",
+      "slug": "bankovskoe-delo",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/bankovskoe-delo",
+      "cluster_key": "finances",
+      "cluster_title": "Финансы и торговля: специальности и профессии в колледжах и техникумах Москвы",
+      "professions": [
+        "Специалист операционно-кассового обслуживания",
+        "Клиентский (банковский) менеджер",
+        "Менеджер выездного сервиса"
+      ],
+      "colleges": [
+        {
+          "name": "Колледж предпринимательства № 11",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-predprinimatelstva-11-onezhskaya-3",
+          "slug": "kolledzh-predprinimatelstva-11-onezhskaya-3"
+        },
+        {
+          "name": "Московский колледж бизнес-технологий",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-kolledzh-biznes-tehnologij",
+          "slug": "moskovskij-kolledzh-biznes-tehnologij"
+        },
+        {
+          "name": "Колледж сферы услуг № 10",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-sfery-uslug-10",
+          "slug": "kolledzh-sfery-uslug-10"
+        },
+        {
+          "name": "Московский образовательный комплекс ЗАПАД",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-obrazovatelnyj-kompleks-zapad",
+          "slug": "moskovskij-obrazovatelnyj-kompleks-zapad"
+        },
+        {
+          "name": "Финансовый колледж № 35",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/finansovyj-kolledzh-35",
+          "slug": "finansovyj-kolledzh-35"
+        },
+        {
+          "name": "Колледж современных технологий имени Героя Советского Союза М.Ф. Панова",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-sovremennyh-tehnologij-imeni-geroya-sovetskogo-soyuza-m-f-panova",
+          "slug": "kolledzh-sovremennyh-tehnologij-imeni-geroya-sovetskogo-soyuza-m-f-panova"
+        },
+        {
+          "name": "Колледж Московского финансово-юридического университета (МФЮА)",
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-moskovskogo-finansovo-yuridicheskogo-universiteta-mfyua",
+          "slug": "kolledzh-moskovskogo-finansovo-yuridicheskogo-universiteta-mfyua"
+        }
+      ]
+    }
+  ],
+  "colleges": [
+    {
+      "name": "ИТ.Москва",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Веб-разработка",
+          "professions": [
+            "Android-разработчик",
+            "Frontend-разработчик",
+            "Разработчик веб-приложений"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/veb-razrabotka"
+        },
+        {
+          "name": "Интеграция решений с применением технологий искусственного интеллекта (Специалист по работе с ИИ)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/integracziya-reshenij-s-primeneniem-tehnologij-iskusstvennogo-intellekta"
+        },
+        {
+          "name": "Интеллектуальные интегрированные системы",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/intellektualnye-integrirovannye-sistemy"
+        },
+        {
+          "name": "Компьютерные системы и комплексы",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/kompyuternye-sistemy-i-kompleksy"
+        },
+        {
+          "name": "Обеспечение информационной безопасности автоматизированных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/obespechenie-informaczionnoj-bezopasnosti-avtomatizirovannyh-sistem"
+        },
+        {
+          "name": "Обеспечение информационной безопасности телекоммуникационных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/obespechenie-informaczionnoj-bezopasnosti-telekom-sistem"
+        },
+        {
+          "name": "Разработка и управление программным обеспечением (Программист)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnye-sistemy-i-programmirovanie"
+        },
+        {
+          "name": "Разработка компьютерных игр, дополненной и виртуальной реальности",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/razrabotka-kompyuternyh-igr-dopolnennoj-i-virtualnoj-realnosti"
+        },
+        {
+          "name": "Сетевое и системное администрирование",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/setevoe-i-sistemnoe-administrirovanie"
+        },
+        {
+          "name": "Техническая эксплуатация и сопровождение информационных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/operator-informaczionnyh-sistem-i-resursov"
+        },
+        {
+          "name": "Графический дизайнер",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/graficheskij-dizajner"
+        },
+        {
+          "name": "Информационное моделирование в строительстве",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnoe-modelirovanie-v-stroitelstve"
+        },
+        {
+          "name": "Мастер вертикального транспорта",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/elektromehanik-po-liftam"
+        }
+      ],
+      "addresses": [
+        "ЮАО, улица Академика Миллионщикова 20, м. Каширская",
+        "ЮЗАО, Проспект Вернадского, дом 29А, м. Проспект Вернадского",
+        "ЮАО, Судостроительная улица 48, м. Нагатинский затон",
+        "ЮАО, Харьковский проезд 5а, м. Пражская",
+        "ЮАО, Коломенская улица 5к3, м. Нагатинский затон"
+      ],
+      "contacts": [
+        "8 (499) 612-14-98",
+        "priem@itmoscow.pro",
+        "https://vk.com/it.moscowpro",
+        "https://t.me/itmoscow1"
+      ],
+      "website": "https://itmoscow.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/it-moskva"
+    },
+    {
+      "name": "Киноколледж № 40 «Московская международная киношкола»",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Актерское искусство",
+          "professions": [
+            "Актер дубляжа",
+            "Начинающий актер",
+            "Руководитель театральной студии, школьного театра"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/akterskoe-masterstvo"
+        },
+        {
+          "name": "Анимация и анимационное кино (по видам)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/animacziya"
+        },
+        {
+          "name": "Кино- и телепроизводство (по видам)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/kino-i-teleproizvodstvo-po-vidam"
+        }
+      ],
+      "addresses": [
+        "ЮАО, улица Шаболовка, 44с2, м. Шаболовская"
+      ],
+      "contacts": [
+        "8 (993) 608-36-21",
+        "spo-40@edu.mos.ru",
+        "https://vk.com/filmcollege",
+        "https://t.me/filmcollege40"
+      ],
+      "website": "https://spo-40.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kinokolledzh-40-moskovskaya-mezhdunarodnaya-kinoshkola"
+    },
+    {
+      "name": "Колледж автоматизации и информационных технологий № 20",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Веб-разработка",
+          "professions": [
+            "Android-разработчик",
+            "Frontend-разработчик",
+            "Разработчик веб-приложений"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/veb-razrabotka"
+        },
+        {
+          "name": "Интеграция решений с применением технологий искусственного интеллекта (Специалист по работе с ИИ)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/integracziya-reshenij-s-primeneniem-tehnologij-iskusstvennogo-intellekta"
+        },
+        {
+          "name": "Интеллектуальные интегрированные системы",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/intellektualnye-integrirovannye-sistemy"
+        },
+        {
+          "name": "Компьютерные системы и комплексы",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/kompyuternye-sistemy-i-kompleksy"
+        },
+        {
+          "name": "Обеспечение информационной безопасности автоматизированных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/obespechenie-informaczionnoj-bezopasnosti-avtomatizirovannyh-sistem"
+        },
+        {
+          "name": "Разработка и управление программным обеспечением (Программист)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnye-sistemy-i-programmirovanie"
+        },
+        {
+          "name": "Сетевое и системное администрирование",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/setevoe-i-sistemnoe-administrirovanie"
+        },
+        {
+          "name": "Техническая эксплуатация и сопровождение информационных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/operator-informaczionnyh-sistem-i-resursov"
+        },
+        {
+          "name": "Графический дизайнер",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/graficheskij-dizajner"
+        },
+        {
+          "name": "Техника и искусство фотографии",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnika-i-iskusstvo-fotografii"
+        },
+        {
+          "name": "Разработка электронных устройств и систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/razrabotka-elektronnyh-ustrojstv-i-sistem"
+        },
+        {
+          "name": "Эксплуатация беспилотных авиационных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/ekspluatacziya-bespilotnyh-aviaczionnyh-sistem"
+        }
+      ],
+      "addresses": [
+        "ВАО, 5-я Парковая улица 58, м. Щелковская",
+        "ВАО, 1-я Мясниковская улица 16, м. Бульвар Рокоссовского",
+        "ВАО, Верхняя Первомайская улица 7, м. Измайловская",
+        "ВАО, Щелковское шоссе 52, м. Щелковская",
+        "ВАО, 1-я Парковая улица 12, м. Измайловская",
+        "САО, улица Расковой 4, м. Динамо"
+      ],
+      "contacts": [
+        "8 (499) 164-86-95",
+        "priem@kait20.ru",
+        "https://vk.com/kait_20_official",
+        "https://t.me/kait_20_official"
+      ],
+      "website": "https://kait20.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-avtomatizaczii-i-informaczionnyh-tehnologij-20"
+    },
+    {
+      "name": "Колледж Архитектуры, Дизайна и Реинжиниринга № 26",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Веб-разработка",
+          "professions": [
+            "Android-разработчик",
+            "Frontend-разработчик",
+            "Разработчик веб-приложений"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/veb-razrabotka"
+        },
+        {
+          "name": "Интеграция решений с применением технологий искусственного интеллекта (Специалист по работе с ИИ)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/integracziya-reshenij-s-primeneniem-tehnologij-iskusstvennogo-intellekta"
+        },
+        {
+          "name": "Разработка и управление программным обеспечением (Программист)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnye-sistemy-i-programmirovanie"
+        },
+        {
+          "name": "Графический дизайнер",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/graficheskij-dizajner"
+        },
+        {
+          "name": "Дизайн (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/dizajn-po-otraslyam"
+        },
+        {
+          "name": "Исполнитель художественно-оформительских работ",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/ispolnitel-hudozhestvenno-oformitelskih-rabot"
+        },
+        {
+          "name": "Конгрессно-выставочная деятельность",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/kongressno-vystavochnaya-deyatelnost"
+        },
+        {
+          "name": "Мастер флористического сервиса",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/floristika-landshaftnyj-dizajn"
+        },
+        {
+          "name": "Реклама",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/reklama"
+        },
+        {
+          "name": "Мастер столярного и мебельного производства",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/master-stolyarnogo-i-mebelnogo-proizvodstva"
+        },
+        {
+          "name": "Промышленный дизайн (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/promyshlennyj-dizajn"
+        },
+        {
+          "name": "Технология переработки древесины",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnologiya-pererabotki-drevesiny"
+        },
+        {
+          "name": "Технология производства изделий из полимерных композитов",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnologiya-proizvodstva-izdelij-iz-polimernyh-kompozitov"
+        },
+        {
+          "name": "Химическая технология производства химических соединений",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/himicheskaya-tehnologiya-organicheskih-veshhestv"
+        },
+        {
+          "name": "Архитектура",
+          "professions": [
+            "Архитектор",
+            "Архитектор по рабочей документации",
+            "Помощник архитектора (чертёжник)"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/arhitektura"
+        },
+        {
+          "name": "Водоснабжение и водоотведение",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/vodosnabzhenie-i-vodootvedenie"
+        },
+        {
+          "name": "Землеустройство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/zemelno-imushhestvennye-otnosheniya"
+        },
+        {
+          "name": "Информационное моделирование в строительстве",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnoe-modelirovanie-v-stroitelstve"
+        },
+        {
+          "name": "Мастер отделочных строительных и декоративных работ",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/master-otdelochnyh-stroitelnyh-i-dekorativnyh-rabot"
+        },
+        {
+          "name": "Мастер столярно-плотничных, паркетных и стекольных работ",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/master-stolyarno-plotnichnyh-parketnyh-i-stekolnyh-rabot"
+        },
+        {
+          "name": "Монтаж и эксплуатация внутренних сантехнических устройств, кондиционирования воздуха и вентиляции",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/montazh-i-ekspluatacziya-vnutrennih-santehnicheskih-ustrojstv-kondiczionirovaniya-vozduha-i-ventilyaczii"
+        },
+        {
+          "name": "Монтаж, наладка и эксплуатация электрооборудования промышленных и гражданских зданий",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/montazh-naladka-i-ekspluatacziya-elektrooborudovaniya-promyshlennyh-i-grazhdanskih-zdanij"
+        },
+        {
+          "name": "Реставратор",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/restavrator-stroitelnyj"
+        },
+        {
+          "name": "Реставрация",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/restavracziya"
+        },
+        {
+          "name": "Садово-парковое и ландшафтное строительство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/sadovo-parkovoe-i-landshaftnoe-stroitelstvo"
+        },
+        {
+          "name": "Сварщик (ручной и частично механизированной сварки (наплавки)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/svarshhik-ruchnoj-i-chastichno-mehanizirovannoj-svarki"
+        },
+        {
+          "name": "Строительство и эксплуатация зданий и сооружений",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/stroitelstvo-i-ekspluatacziya-zdanij-i-sooruzhenij"
+        },
+        {
+          "name": "Строительство и эксплуатация инженерных сооружений",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/stroitelstvo-i-ekspluatacziya-inzhenernyh-sooruzhenij"
+        },
+        {
+          "name": "Эксплуатация и обслуживание многоквартирного дома",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/upravlenie-ekspluatacziya-i-obsluzhivanie-mnogokvartirnogo-doma"
+        },
+        {
+          "name": "Электромонтажник слаботочных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/elektromontazhnik-slabotochnyh-sistem"
+        },
+        {
+          "name": "Электромонтажник электрических сетей и электрооборудования",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/elektromontazhnik-elektricheskih-setej-i-elektrooborudovaniya"
+        }
+      ],
+      "addresses": [
+        "ЮАО, Севастопольский проспект 5а, м. Крымская",
+        "ЮВАО, 5-ая Кожуховская улица 26с1, м. Кожуховская",
+        "ЮВАО, улица Шкулева 27с1, м. Волжская",
+        "ВАО, Красноказарменная улица 10а, м. Авиамоторная",
+        "ЮВАО, 2-я Фрезерная улица 8, м. Андроновка",
+        "ЮВАО, Совхозная улица 2с1, м. Люблино",
+        "ЮВАО, шоссе Энтузиастов 19с2, м. Авиамоторная",
+        "ЮВАО, Цимлянская 7с1, м. Люблино",
+        "ЮВАО, Подъемная улица 15, м. Римская",
+        "ЮВАО, улица Трофимова 27к2, м. Кожуховская"
+      ],
+      "contacts": [
+        "8 (495) 369-40-26",
+        "priem@26kadr.ru",
+        "https://vk.com/26college",
+        "https://t.me/news26college"
+      ],
+      "website": "https://26kadr.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-arhitektury-dizajna-i-reinzhiniringa-26"
+    },
+    {
+      "name": "Колледж Московского транспорта",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Документационное обеспечение управления и архивоведение",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/dokumentaczionnoe-obespechenie-upravleniya-i-arhivovedenie"
+        },
+        {
+          "name": "Эксплуатация и обслуживание электрического и электромеханического оборудования (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnicheskaya-ekspluatacziya-i-obsluzhivanie-elektricheskogo-i-elektromehanicheskogo-oborudovaniya"
+        },
+        {
+          "name": "Электрические станции, сети, их релейная защита и автоматизация",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/elektricheskie-stanczii-seti-i-sistemy-ih-relejnaya-zashhita-i-avtomatizacziya"
+        },
+        {
+          "name": "Электроснабжение",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/elektrosnabzhenie-po-otraslyam"
+        },
+        {
+          "name": "Автоматика и телемеханика на транспорте (железнодорожном транспорте)",
+          "professions": [
+            "Энергетик",
+            "Электромеханик",
+            "Начальник дистанции",
+            "железнодорожном транспорте"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/elektromonter-ustrojstv-signalizaczii-czentralizaczii-blokirovki-sczb"
+        },
+        {
+          "name": "Мастер по комплексному обслуживанию пути рельсового транспорта",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/brigadir-puteecz"
+        },
+        {
+          "name": "Операционная деятельность в логистике",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/operaczionnaya-deyatelnost-v-logistike"
+        },
+        {
+          "name": "Организация перевозок и управление на транспорте (по видам)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/organizacziya-perevozok-i-upravlenie-na-transporte"
+        },
+        {
+          "name": "Помощник машиниста (по видам подвижного состава железнодорожного транспорта)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/mashinist-lokomotiva"
+        },
+        {
+          "name": "Сервис на транспорте (по видам транспорта)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/servis-na-transporte-po-vsem-vidam-transporta"
+        },
+        {
+          "name": "Техническая эксплуатация подвижного состава железных дорог",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnicheskaya-ekspluatacziya-podvizhnogo-sostava-zheleznyh-dorog"
+        },
+        {
+          "name": "Эксплуатация транспортного электрооборудования и автоматики (по видам транспорта, за исключением водного)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/ekspluatacziya-transportnogo-elektrooborudovaniya-i-avtomatiki"
+        }
+      ],
+      "addresses": [
+        "ЦАО, Каланчевская улица 26с1, м. Комсомольская",
+        "САО, Михалковская улица 52, м. Коптево",
+        "ВАО, Напольный проезд 7, м. Новогиреево"
+      ],
+      "contacts": [
+        "8 (495) 300-04-00",
+        "priem@kmt.moscow",
+        "https://vk.com/mostranskmt",
+        "https://t.me/mostransKMT"
+      ],
+      "website": "https://kmt.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-moskovskogo-transporta"
+    },
+    {
+      "name": "Колледж Московского финансово-юридического университета (МФЮА)",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Правоохранительная деятельность",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/pravoohranitelnaya-deyatelnost"
+        },
+        {
+          "name": "Юриспруденция",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/yurisprudencziya"
+        },
+        {
+          "name": "Туризм и гостеприимство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/turizm"
+        },
+        {
+          "name": "Компьютерные системы и комплексы",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/kompyuternye-sistemy-i-kompleksy"
+        },
+        {
+          "name": "Разработка и управление программным обеспечением (Программист)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnye-sistemy-i-programmirovanie"
+        },
+        {
+          "name": "Сетевое и системное администрирование",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/setevoe-i-sistemnoe-administrirovanie"
+        },
+        {
+          "name": "Землеустройство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/zemelno-imushhestvennye-otnosheniya"
+        },
+        {
+          "name": "Банковское дело",
+          "professions": [
+            "Специалист операционно-кассового обслуживания",
+            "Клиентский (банковский) менеджер",
+            "Менеджер выездного сервиса"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/bankovskoe-delo"
+        },
+        {
+          "name": "Торговое дело",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/torgovoe-delo"
+        },
+        {
+          "name": "Финансы",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/finansy"
+        },
+        {
+          "name": "Экономика и бухгалтерский учет (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/ekonomika-i-buhgalterskij-uchet"
+        }
+      ],
+      "addresses": [
+        "ЮЗАО, улица Введенского 1а, м. Калужская",
+        "САО, Авиационный переулок 4а, м. Аэропорт",
+        "ЮВАО, 3-я Кабельная улица, 1с1, м. Авиамоторная",
+        "ЮАО, улица Генерала Белова 7а, м. Домодедовская",
+        "ЮАО, Варшавское шоссе 38, м. Нагатинская",
+        "ЮАО, Варшавское шоссе 81к2, м. Варшавская",
+        "ЮВАО, Волгоградский проспект 32с11, м. Волгоградский проспект",
+        "СВАО, улица Плещеева 16а, м. Бибирево",
+        "ЗелАО, Заводская улица, 1а, м. Зеленоград-Крюково"
+      ],
+      "contacts": [
+        "8 (499) 346-86-92",
+        "post@mfua.ru",
+        "https://vk.com/mfua_mos",
+        "https://t.me/info_MFUA"
+      ],
+      "website": "https://www.mfua.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-moskovskogo-finansovo-yuridicheskogo-universiteta-mfyua"
+    },
+    {
+      "name": "Колледж предпринимательства № 11",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Туризм и гостеприимство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/turizm"
+        },
+        {
+          "name": "Веб-разработка",
+          "professions": [
+            "Android-разработчик",
+            "Frontend-разработчик",
+            "Разработчик веб-приложений"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/veb-razrabotka"
+        },
+        {
+          "name": "Компьютерные системы и комплексы",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/kompyuternye-sistemy-i-kompleksy"
+        },
+        {
+          "name": "Разработка и управление программным обеспечением (Программист)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnye-sistemy-i-programmirovanie"
+        },
+        {
+          "name": "Сетевое и системное администрирование",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/setevoe-i-sistemnoe-administrirovanie"
+        },
+        {
+          "name": "Анимация и анимационное кино (по видам)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/animacziya"
+        },
+        {
+          "name": "Графический дизайнер",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/graficheskij-dizajner"
+        },
+        {
+          "name": "Кино- и телепроизводство (по видам)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/kino-i-teleproizvodstvo-po-vidam"
+        },
+        {
+          "name": "Музыкальное звукооператорское мастерство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/muzykalnoe-zvukooperatorskoe-masterstvo"
+        },
+        {
+          "name": "Реклама",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/reklama"
+        },
+        {
+          "name": "Техника и искусство фотографии",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnika-i-iskusstvo-fotografii"
+        },
+        {
+          "name": "Технология обработки алмазов",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnologiya-obrabotki-almazov"
+        },
+        {
+          "name": "Ювелир",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/yuvelir"
+        },
+        {
+          "name": "Аддитивные технологии",
+          "professions": [
+            "Разработчик управляющих программ",
+            "Специалист по контролю качества",
+            "Специалист по обратному проектированию"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/additivnye-tehnologii"
+        },
+        {
+          "name": "Медицинская оптика",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/mediczinskaya-optika"
+        },
+        {
+          "name": "Банковское дело",
+          "professions": [
+            "Специалист операционно-кассового обслуживания",
+            "Клиентский (банковский) менеджер",
+            "Менеджер выездного сервиса"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/bankovskoe-delo"
+        },
+        {
+          "name": "Торговое дело",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/torgovoe-delo"
+        },
+        {
+          "name": "Финансы",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/finansy"
+        }
+      ],
+      "addresses": [
+        "САО, Онежская улица 3, м. Коптево",
+        "САО, Ленинградское шоссе 13а, м. Войковская",
+        "САО, Смольная улица 10а, м. Водный стадион",
+        "САО, Фестивальная улица 51, м. Речной вокзал",
+        "САО, Солнечногорская улица 13а, м. Водный стадион"
+      ],
+      "contacts": [
+        "8 (499) 150-45-04",
+        "priem@kp11.ru",
+        "https://vk.com/gapoukp11",
+        "https://t.me/kp11mos"
+      ],
+      "website": "https://kp11.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-predprinimatelstva-11-onezhskaya-3"
+    },
+    {
+      "name": "Колледж связи № 54 имени П.М. Вострухина",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Веб-разработка",
+          "professions": [
+            "Android-разработчик",
+            "Frontend-разработчик",
+            "Разработчик веб-приложений"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/veb-razrabotka"
+        },
+        {
+          "name": "Интеграция решений с применением технологий искусственного интеллекта (Специалист по работе с ИИ)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/integracziya-reshenij-s-primeneniem-tehnologij-iskusstvennogo-intellekta"
+        },
+        {
+          "name": "Интеллектуальные интегрированные системы",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/intellektualnye-integrirovannye-sistemy"
+        },
+        {
+          "name": "Инфокоммуникационные сети и системы связи",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/infokommunikaczionnye-seti-i-sistemy-svyazi"
+        },
+        {
+          "name": "Квантовые коммуникации",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/kvantovye-kommunikaczii"
+        },
+        {
+          "name": "Обеспечение информационной безопасности автоматизированных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/obespechenie-informaczionnoj-bezopasnosti-avtomatizirovannyh-sistem"
+        },
+        {
+          "name": "Обеспечение информационной безопасности телекоммуникационных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/obespechenie-informaczionnoj-bezopasnosti-telekom-sistem"
+        },
+        {
+          "name": "Разработка и управление программным обеспечением (Программист)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnye-sistemy-i-programmirovanie"
+        },
+        {
+          "name": "Сетевое и системное администрирование",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/setevoe-i-sistemnoe-administrirovanie"
+        },
+        {
+          "name": "Системы радиосвязи, мобильной связи и телерадиовещания",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/sistemy-radiosvyazi-mobilnoj-svyazi-i-teleradioveshhaniya-2"
+        },
+        {
+          "name": "Техническая эксплуатация и сопровождение информационных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/operator-informaczionnyh-sistem-i-resursov"
+        },
+        {
+          "name": "Оператор автоматической линии сборки радиоэлектронной аппаратуры и приборов",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/operator-avtomaticheskoj-linii-sborki-radioelektronnoj-apparatury-i-priborov"
+        },
+        {
+          "name": "Разработка электронных устройств и систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/razrabotka-elektronnyh-ustrojstv-i-sistem"
+        },
+        {
+          "name": "Сборщик оптоэлектронных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/sborshhik-optoelektronnyh-sistem"
+        },
+        {
+          "name": "Эксплуатация и обслуживание электрического и электромеханического оборудования (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnicheskaya-ekspluatacziya-i-obsluzhivanie-elektricheskogo-i-elektromehanicheskogo-oborudovaniya"
+        },
+        {
+          "name": "Электроснабжение",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/elektrosnabzhenie-po-otraslyam"
+        }
+      ],
+      "addresses": [
+        "ЦАО, улица Большие Каменщики 7, м. Таганская",
+        "ВАО, Кирпичная улица 33, м. Семеновская",
+        "ЮВАО, Рязанский проспект 8с1, м. Стахановская",
+        "ЮВАО, Басовская улица 12, м. Нижегородская",
+        "ЦАО, Рабочая улица 12с1, Римская"
+      ],
+      "contacts": [
+        "+7 (495) 134-12-34 (доб. 1)",
+        "spo-54@edu.mos.ru",
+        "https://vk.com/ks54ru",
+        "https://t.me/ks54ru"
+      ],
+      "website": "https://ks54.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-svyazi-54-imeni-p-m-vostruhina"
+    },
+    {
+      "name": "Колледж современных технологий имени Героя Советского Союза М.Ф. Панова",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Обеспечение информационной безопасности автоматизированных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/obespechenie-informaczionnoj-bezopasnosti-avtomatizirovannyh-sistem"
+        },
+        {
+          "name": "Разработка и управление программным обеспечением (Программист)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnye-sistemy-i-programmirovanie"
+        },
+        {
+          "name": "Техническая эксплуатация и сопровождение информационных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/operator-informaczionnyh-sistem-i-resursov"
+        },
+        {
+          "name": "Аддитивные технологии",
+          "professions": [
+            "Разработчик управляющих программ",
+            "Специалист по контролю качества",
+            "Специалист по обратному проектированию"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/additivnye-tehnologii"
+        },
+        {
+          "name": "Теплоснабжение и теплотехническое оборудование",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/teplosnabzhenie-i-teplotehnicheskoe-oborudovanie"
+        },
+        {
+          "name": "Техническая эксплуатация и обслуживание роботизированного производства (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnicheskaya-ekspluatacziya-i-obsluzhivanie-robotizirovannogo-proizvodstva-po-otraslyam"
+        },
+        {
+          "name": "Эксплуатация беспилотных авиационных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/ekspluatacziya-bespilotnyh-aviaczionnyh-sistem"
+        },
+        {
+          "name": "Электрические станции, сети, их релейная защита и автоматизация",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/elektricheskie-stanczii-seti-i-sistemy-ih-relejnaya-zashhita-i-avtomatizacziya"
+        },
+        {
+          "name": "Информационное моделирование в строительстве",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnoe-modelirovanie-v-stroitelstve"
+        },
+        {
+          "name": "Машинист дорожных и строительных машин",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/mashinist-dorozhnyh-i-stroitelnyh-mashin"
+        },
+        {
+          "name": "Сварочное производство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/svarochnoe-proizvodstvo"
+        },
+        {
+          "name": "Сварщик (ручной и частично механизированной сварки (наплавки)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/svarshhik-ruchnoj-i-chastichno-mehanizirovannoj-svarki"
+        },
+        {
+          "name": "Строительство и эксплуатация зданий и сооружений",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/stroitelstvo-i-ekspluatacziya-zdanij-i-sooruzhenij"
+        },
+        {
+          "name": "Техническая эксплуатация подъемно-транспортных, строительных, дорожных машин и оборудования (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnicheskaya-ekspluatacziya-podemno-transportnyh-stroitelnyh-dorozhnyh-mashin-i-oborudovaniya"
+        },
+        {
+          "name": "Электромонтажник электрических сетей и электрооборудования",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/elektromontazhnik-elektricheskih-setej-i-elektrooborudovaniya"
+        },
+        {
+          "name": "Банковское дело",
+          "professions": [
+            "Специалист операционно-кассового обслуживания",
+            "Клиентский (банковский) менеджер",
+            "Менеджер выездного сервиса"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/bankovskoe-delo"
+        },
+        {
+          "name": "Торговое дело",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/torgovoe-delo"
+        },
+        {
+          "name": "Экономика и бухгалтерский учет (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/ekonomika-i-buhgalterskij-uchet"
+        }
+      ],
+      "addresses": [
+        "СВАО, Хибинский проезд 10, м. ВДНХ/Ростокино",
+        "СВАО, улица Павла Корчагина 17, м. ВДНХ",
+        "СВАО, Хибинский проезд 6к1, м. ВДНХ/Ростокино",
+        "СВАО, Анадырский проезд 51к1, м. Медведково"
+      ],
+      "contacts": [
+        "+7 (499)188-08-83",
+        "kst@edu.mos.ru",
+        "https://vk.com/kstmskobr",
+        "https://t.me/kst_college"
+      ],
+      "website": "https://kst.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-sovremennyh-tehnologij-imeni-geroya-sovetskogo-soyuza-m-f-panova"
+    },
+    {
+      "name": "Колледж сферы услуг № 10",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Повар, кондитер",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/povar-konditer"
+        },
+        {
+          "name": "Поварское и кондитерское дело",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/povarskoe-i-konditerskoe-delo"
+        },
+        {
+          "name": "Технологии индустрии красоты",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnologii-esteticheskih-uslug"
+        },
+        {
+          "name": "Туризм и гостеприимство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/turizm"
+        },
+        {
+          "name": "Банковское дело",
+          "professions": [
+            "Специалист операционно-кассового обслуживания",
+            "Клиентский (банковский) менеджер",
+            "Менеджер выездного сервиса"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/bankovskoe-delo"
+        },
+        {
+          "name": "Торговое дело",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/torgovoe-delo"
+        }
+      ],
+      "addresses": [
+        "САО, Дмитровское шоссе 11а, м. Тимирязевская",
+        "САО, улица Панфилова 6, м. Панфиловская",
+        "САО, Дмитровское шоссе 79, м. Верхние Лихоборы"
+      ],
+      "contacts": [
+        "8 (901) 555-36-43",
+        "priem@ksu10.ru",
+        "https://vk.com/gbpouksu10",
+        "https://t.me/lifeksu10"
+      ],
+      "website": "https://ksu10.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-sfery-uslug-10"
+    },
+    {
+      "name": "Медицинский колледж № 7",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Акушерское дело",
+          "professions": [
+            "Акушерка",
+            "Старший акушер/акушерка",
+            "Акушер"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/akusherskoe-delo"
+        },
+        {
+          "name": "Лечебное дело",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/lechebnoe-delo"
+        },
+        {
+          "name": "Медицинский массаж (для обучения лиц с ограниченными возможностями здоровья по зрению)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/mediczinskij-massazh-dlya-obucheniya-licz-s-ogranichennymi-vozmozhnostyami-zdorovya-po-zreniyu"
+        },
+        {
+          "name": "Сестринское дело",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/sestrinskoe-delo"
+        }
+      ],
+      "addresses": [
+        "ВАО, 9-я улица Соколиной Горы 3а, м. Соколиная гора",
+        "ВАО, Новогиреевская улица 3, м. Перово",
+        "СВАО, Таймырская улица 4, м. Медведково",
+        "ЦАО, Николоямская улица 33с1, м. Таганская",
+        "ВАО, 14-я Парковая улица, дом 4А, м. Первомайская",
+        "ВАО,14-я Парковая улица, дом 4Б, м. Первомайская",
+        "СВАО, улица Милашенкова 7а, м. Фонвизинская",
+        "СЗАО, улица Вилиса Лациса 29, м. Планерная",
+        "ЗeлAO, Зеленоград, Каштановая аллея 4, м. Зеленоград-Крюково"
+      ],
+      "contacts": [
+        "8 (495) 915-27-83",
+        "AVDS-priemmk7@edu.mos.ru",
+        "https://vk.com/medcollege7"
+      ],
+      "website": "https://medcollege7.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/gbpou-dzm-mediczinskij-kolledzh-7"
+    },
+    {
+      "name": "Московский государственный образовательный комплекс",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Разработка и управление программным обеспечением (Программист)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnye-sistemy-i-programmirovanie"
+        },
+        {
+          "name": "Графический дизайнер",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/graficheskij-dizajner"
+        },
+        {
+          "name": "Аддитивные технологии",
+          "professions": [
+            "Разработчик управляющих программ",
+            "Специалист по контролю качества",
+            "Специалист по обратному проектированию"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/additivnye-tehnologii"
+        },
+        {
+          "name": "Мехатроника и робототехника (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/mehatronika-i-mobilnaya-robototehnika"
+        },
+        {
+          "name": "Монтаж, техническое обслуживание и ремонт биотехнических и медицинских аппаратов и систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/montazh-tehnicheskoe-obsluzhivanie-i-remont-biotehnicheskih-i-mediczinskih-apparatov-i-sistem-2"
+        },
+        {
+          "name": "Монтаж, техническое обслуживание и ремонт электронных приборов и устройств",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/montazh-tehnicheskoe-obsluzhivanie-i-remont-elektronnyh-priborov-i-ustrojstv"
+        },
+        {
+          "name": "Оператор-наладчик металлообрабатывающих станков",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/operator-naladchik-metalloobrabatyvayushhih-stankov"
+        },
+        {
+          "name": "Промышленный дизайн (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/promyshlennyj-dizajn"
+        },
+        {
+          "name": "Техническая эксплуатация и обслуживание роботизированного производства (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnicheskaya-ekspluatacziya-i-obsluzhivanie-robotizirovannogo-proizvodstva-po-otraslyam"
+        },
+        {
+          "name": "Технология машиностроения",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnologiya-mashinostroeniya"
+        },
+        {
+          "name": "Управление качеством продукции, процессов и услуг (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/upravlenie-kachestvom-produkczii-proczessov-i-uslug"
+        },
+        {
+          "name": "Фармация",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/farmacziya"
+        },
+        {
+          "name": "Эксплуатация беспилотных авиационных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/ekspluatacziya-bespilotnyh-aviaczionnyh-sistem"
+        }
+      ],
+      "addresses": [
+        "СЗАО, улица Свободы 33, м. Сходненская",
+        "ЗАО, Молдавская улица 5с5, м. Кунцевская",
+        "ЮАО, 2-ой Павелецкий проезд 4а, м. Павелецкая"
+      ],
+      "contacts": [
+        "8 (495) 491-02-45",
+        "mgok@edu.mos.ru",
+        "https://vk.com/mgok.online",
+        "https://t.me/MGOK_Online"
+      ],
+      "website": "https://mgok.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-gosudarstvennyj-obrazovatelnyj-kompleks"
+    },
+    {
+      "name": "Московский государственный университет спорта и туризма",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Туризм и гостеприимство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/turizm"
+        },
+        {
+          "name": "Адаптивная физическая культура",
+          "professions": [
+            "Тренер по адаптивному плаванию",
+            "Инструктор по физической культуре",
+            "Учитель адаптивной физической культуры"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/adaptivnaya-fizicheskaya-kultura"
+        },
+        {
+          "name": "Спорт",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/sport"
+        },
+        {
+          "name": "Физическая культура",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/fizicheskaya-kultura"
+        }
+      ],
+      "addresses": [
+        "ЮАО, Кировоградская улица 21к1, м. Улица Академика Янгеля"
+      ],
+      "contacts": [
+        "https://vk.com/mgusit",
+        "https://t.me/mgusit"
+      ],
+      "website": "https://mgusit.mossport.ru/abitur/spo",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-gosudarstvennyj-universitet-sporta-i-turizma"
+    },
+    {
+      "name": "Московский колледж архитектуры и градостроительства",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Компьютерные системы и комплексы",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/kompyuternye-sistemy-i-kompleksy"
+        },
+        {
+          "name": "Разработка и управление программным обеспечением (Программист)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnye-sistemy-i-programmirovanie"
+        },
+        {
+          "name": "Дизайн (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/dizajn-po-otraslyam"
+        },
+        {
+          "name": "Аддитивные технологии",
+          "professions": [
+            "Разработчик управляющих программ",
+            "Специалист по контролю качества",
+            "Специалист по обратному проектированию"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/additivnye-tehnologii"
+        },
+        {
+          "name": "Технология переработки древесины",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnologiya-pererabotki-drevesiny"
+        },
+        {
+          "name": "Архитектура",
+          "professions": [
+            "Архитектор",
+            "Архитектор по рабочей документации",
+            "Помощник архитектора (чертёжник)"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/arhitektura"
+        },
+        {
+          "name": "Землеустройство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/zemelno-imushhestvennye-otnosheniya"
+        },
+        {
+          "name": "Информационное моделирование в строительстве",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnoe-modelirovanie-v-stroitelstve"
+        },
+        {
+          "name": "Мастер отделочных строительных и декоративных работ",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/master-otdelochnyh-stroitelnyh-i-dekorativnyh-rabot"
+        },
+        {
+          "name": "Монтаж и эксплуатация внутренних сантехнических устройств, кондиционирования воздуха и вентиляции",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/montazh-i-ekspluatacziya-vnutrennih-santehnicheskih-ustrojstv-kondiczionirovaniya-vozduha-i-ventilyaczii"
+        },
+        {
+          "name": "Монтаж и эксплуатация оборудования и систем газоснабжения",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/montazh-i-ekspluatacziya-oborudovaniya-i-sistem-gazosnabzheniya"
+        },
+        {
+          "name": "Монтаж, наладка и эксплуатация электрооборудования промышленных и гражданских зданий",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/montazh-naladka-i-ekspluatacziya-elektrooborudovaniya-promyshlennyh-i-grazhdanskih-zdanij"
+        },
+        {
+          "name": "Садово-парковое и ландшафтное строительство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/sadovo-parkovoe-i-landshaftnoe-stroitelstvo"
+        },
+        {
+          "name": "Сварочное производство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/svarochnoe-proizvodstvo"
+        },
+        {
+          "name": "Сварщик (ручной и частично механизированной сварки (наплавки)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/svarshhik-ruchnoj-i-chastichno-mehanizirovannoj-svarki"
+        },
+        {
+          "name": "Строительство и эксплуатация зданий и сооружений",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/stroitelstvo-i-ekspluatacziya-zdanij-i-sooruzhenij"
+        },
+        {
+          "name": "Эксплуатация и обслуживание многоквартирного дома",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/upravlenie-ekspluatacziya-i-obsluzhivanie-mnogokvartirnogo-doma"
+        }
+      ],
+      "addresses": [
+        "СВАО, Анадырский проезд 79с1, м. Медведково",
+        "СВАО, улица Руставели 10к1, м. Бутырская",
+        "ВАО, 12-я Парковая улица 13, м. Первомайская",
+        "САО, улица Усиевича 31к3, м. Сокол",
+        "САО, Коровинское шоссе 28, м. Селигерская",
+        "ВАО, Зеленый проспект 74а, м. Новогиреево"
+      ],
+      "contacts": [
+        "8 (495) 474-18-88",
+        "spo-mcag@edu.mos.ru",
+        "https://vk.com/mcag.mskobr",
+        "https://t.me/mcag_23"
+      ],
+      "website": "https://mcag.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-kolledzh-arhitektury-i-gradostroitelstva"
+    },
+    {
+      "name": "Московский колледж бизнес-технологий",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Веб-разработка",
+          "professions": [
+            "Android-разработчик",
+            "Frontend-разработчик",
+            "Разработчик веб-приложений"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/veb-razrabotka"
+        },
+        {
+          "name": "Обеспечение информационной безопасности автоматизированных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/obespechenie-informaczionnoj-bezopasnosti-avtomatizirovannyh-sistem"
+        },
+        {
+          "name": "Разработка и управление программным обеспечением (Программист)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnye-sistemy-i-programmirovanie"
+        },
+        {
+          "name": "Сетевое и системное администрирование",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/setevoe-i-sistemnoe-administrirovanie"
+        },
+        {
+          "name": "Техническая эксплуатация и сопровождение информационных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/operator-informaczionnyh-sistem-i-resursov"
+        },
+        {
+          "name": "Банковское дело",
+          "professions": [
+            "Специалист операционно-кассового обслуживания",
+            "Клиентский (банковский) менеджер",
+            "Менеджер выездного сервиса"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/bankovskoe-delo"
+        },
+        {
+          "name": "Финансы",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/finansy"
+        },
+        {
+          "name": "Экономика и бухгалтерский учет (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/ekonomika-i-buhgalterskij-uchet"
+        }
+      ],
+      "addresses": [
+        "ЦАО, Пресненский Вал 15с1, м. Улица 1905 года",
+        "ЮВАО, Авиамоторная улица 36, м. Авиамоторная"
+      ],
+      "contacts": [
+        "8 (499) 790-06-53",
+        "kbt@edu.mos.ru",
+        "https://vk.com/kbt_college_moscow",
+        "https://t.me/kbt_moscow"
+      ],
+      "website": "https://cbcol.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-kolledzh-biznes-tehnologij"
+    },
+    {
+      "name": "Московский колледж социальных профессий имени Е.И. Холостовой",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Юриспруденция",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/yurisprudencziya"
+        },
+        {
+          "name": "Адаптивная физическая культура",
+          "professions": [
+            "Тренер по адаптивному плаванию",
+            "Инструктор по физической культуре",
+            "Учитель адаптивной физической культуры"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/adaptivnaya-fizicheskaya-kultura"
+        },
+        {
+          "name": "Социальная работа",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/speczialist-po-soczialnoj-rabote"
+        }
+      ],
+      "addresses": [
+        "СВАО, Большая Новодмитровская улица 63, м. Дмитровская"
+      ],
+      "contacts": [
+        "8 (925) 249-94-52",
+        "socialcollege@social.mos.ru",
+        "https://vk.com/social_kdd",
+        "https://t.me/kdd_main"
+      ],
+      "website": "http://collegesocialkdd.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/kolledzh-po-podgotovke-soczialnyh-rabotnikov"
+    },
+    {
+      "name": "Московский колледж управления, гостиничного бизнеса и информационных технологий «Царицыно»",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Поварское и кондитерское дело",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/povarskoe-i-konditerskoe-delo"
+        },
+        {
+          "name": "Туризм и гостеприимство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/turizm"
+        },
+        {
+          "name": "Веб-разработка",
+          "professions": [
+            "Android-разработчик",
+            "Frontend-разработчик",
+            "Разработчик веб-приложений"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/veb-razrabotka"
+        },
+        {
+          "name": "Интеграция решений с применением технологий искусственного интеллекта (Специалист по работе с ИИ)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/integracziya-reshenij-s-primeneniem-tehnologij-iskusstvennogo-intellekta"
+        },
+        {
+          "name": "Разработка и управление программным обеспечением (Программист)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnye-sistemy-i-programmirovanie"
+        },
+        {
+          "name": "Техническая эксплуатация и сопровождение информационных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/operator-informaczionnyh-sistem-i-resursov"
+        },
+        {
+          "name": "Сервис на транспорте (по видам транспорта)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/servis-na-transporte-po-vsem-vidam-transporta"
+        },
+        {
+          "name": "Финансы",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/finansy"
+        }
+      ],
+      "addresses": [
+        "ЮАО, Шипиловский проезд 37к1, м. Орехово",
+        "ЮАО, ул. Домодедовская д. 24, корп.7, м. Домодедовская"
+      ],
+      "contacts": [
+        "tsaritsino@edu.mos.ru",
+        "https://vk.com/college_tsaritsyno",
+        "https://t.me/Collegetsaritsyno"
+      ],
+      "website": "https://collegetsaritsyno.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-kolledzh-upravleniya-gostinichnogo-biznesa-i-informaczionnyh-tehnologij-czariczyno"
+    },
+    {
+      "name": "Московский образовательный комплекс ЗАПАД",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Повар, кондитер",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/povar-konditer"
+        },
+        {
+          "name": "Поварское и кондитерское дело",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/povarskoe-i-konditerskoe-delo"
+        },
+        {
+          "name": "Технологии индустрии красоты",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnologii-esteticheskih-uslug"
+        },
+        {
+          "name": "Туризм и гостеприимство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/turizm"
+        },
+        {
+          "name": "Банковское дело",
+          "professions": [
+            "Специалист операционно-кассового обслуживания",
+            "Клиентский (банковский) менеджер",
+            "Менеджер выездного сервиса"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/bankovskoe-delo"
+        },
+        {
+          "name": "Торговое дело",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/torgovoe-delo"
+        },
+        {
+          "name": "Финансы",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/finansy"
+        },
+        {
+          "name": "Экономика и бухгалтерский учет (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/ekonomika-i-buhgalterskij-uchet"
+        }
+      ],
+      "addresses": [
+        "ЗАО, Бобруйская улица 17, м. Молодежная",
+        "СЗАО, улица Твардовского 10к1, м. Строгино",
+        "ЗАО, Кастанаевская улица 28, м. Филевский парк",
+        "ЗАО, улица Екатерины Будановой 18, м. Кунцевская",
+        "СЗАО, улица Мневники 4, м. Хорошёво"
+      ],
+      "contacts": [
+        "https://vk.com/mokzapadru",
+        "https://t.me/gbpou_mok_zapad"
+      ],
+      "website": "https://zapad.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-obrazovatelnyj-kompleks-zapad"
+    },
+    {
+      "name": "Московский образовательный комплекс имени Виктора Талалихина",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Аппаратчик-оператор производства продуктов питания из растительного сырья",
+          "professions": [
+            "Оператор технологической линии",
+            "Бригадир в пекарне",
+            "Пекарь ремесленного хлеба"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/apparatchik-operator-proizvodstva-produktov-pitaniya-iz-rastitelnogo-syrya"
+        },
+        {
+          "name": "Повар, кондитер",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/povar-konditer"
+        },
+        {
+          "name": "Поварское и кондитерское дело",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/povarskoe-i-konditerskoe-delo"
+        },
+        {
+          "name": "Технологии индустрии красоты",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnologii-esteticheskih-uslug"
+        },
+        {
+          "name": "Технология продуктов питания животного происхождения",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnologiya-myasa-i-myasnyh-produktov"
+        },
+        {
+          "name": "Технология продуктов питания из растительного сырья",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnologiya-produktov-pitaniya-iz-rastitelnogo-syrya"
+        },
+        {
+          "name": "Туризм и гостеприимство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/turizm"
+        }
+      ],
+      "addresses": [
+        "ЮАО, 6-ая Радиальная улица 10, м. Царицыно",
+        "ЮВАО, Донецкая улица 28, м. Марьино",
+        "ЮВАО, ул. Полбина, д. 72, стр. 1, м. Печатники",
+        "ЮАО, Варшавское шоссе 129, м. Пражская"
+      ],
+      "contacts": [
+        "8 (495) 327-51-43",
+        "contingent@mok-vt.ru",
+        "https://vk.com/mok.v.talalihina",
+        "https://t.me/mokvtalalihina"
+      ],
+      "website": "https://mok.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-obrazovatelnyj-kompleks-imeni-viktora-talalihina"
+    },
+    {
+      "name": "Московский педагогический колледж",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Адаптивная физическая культура",
+          "professions": [
+            "Тренер по адаптивному плаванию",
+            "Инструктор по физической культуре",
+            "Учитель адаптивной физической культуры"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/adaptivnaya-fizicheskaya-kultura"
+        },
+        {
+          "name": "Дошкольное образование",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/doshkolnoe-obrazovanie"
+        },
+        {
+          "name": "Коррекционная педагогика в начальном образовании",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/korrekczionnaya-pedagogika-v-nachalnom-obrazovanii"
+        },
+        {
+          "name": "Преподавание в начальных классах",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/prepodavanie-v-nachalnyh-klassah"
+        },
+        {
+          "name": "Преподавание в основном общем образовании (по профилям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/prepodavanie-v-osnovnom-obshhem-obrazovanii-po-profilyam"
+        },
+        {
+          "name": "Специальное дошкольное образование",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/speczialnoe-doshkolnoe-obrazovanie"
+        },
+        {
+          "name": "Физическая культура",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/fizicheskaya-kultura"
+        }
+      ],
+      "addresses": [
+        "СЗАО, Митинская улица 45к3, м. Пятницкое шоссе",
+        "ЮАО, Бирюлевская улица 28, м. Пражская",
+        "г. Москва, ул. Федора Полетаева, дом 2, корпус 4",
+        "ЮВАО, улица Федора Полетаева 2к4, м. Кузьминки,",
+        "ЮВАО, улица Федора Полетаева улица, д.2, корп.7, м. Кузьминки, м. Окская"
+      ],
+      "contacts": [
+        "priem@mosped.ru",
+        "https://vk.com/moskovskiypedagogicheskiycolleg",
+        "https://t.me/mospedMPK"
+      ],
+      "website": "https://mpk.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-pedagogicheskij-kolledzh"
+    },
+    {
+      "name": "Московский театральный колледж имени Л.А. Филатова",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Актерское искусство",
+          "professions": [
+            "Актер дубляжа",
+            "Начинающий актер",
+            "Руководитель театральной студии, школьного театра"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/akterskoe-masterstvo"
+        },
+        {
+          "name": "Социально-культурная деятельность (по видам)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/soczialno-kulturnaya-deyatelnost-po-vidam"
+        }
+      ],
+      "addresses": [
+        "СЗАО, Волоцкой переулок 15к2, м. Митино"
+      ],
+      "contacts": [
+        "https://vk.com/mtk.filatova",
+        "https://t.me/filatovschool"
+      ],
+      "website": "https://filatovschool.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/moskovskij-teatralnyj-kolledzh-imeni-l-a-filatova"
+    },
+    {
+      "name": "Образовательный комплекс градостроительства «Столица»",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Кинология",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/kinologiya-2"
+        },
+        {
+          "name": "Графический дизайнер",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/graficheskij-dizajner"
+        },
+        {
+          "name": "Дизайн (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/dizajn-po-otraslyam"
+        },
+        {
+          "name": "Мастер столярного и мебельного производства",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/master-stolyarnogo-i-mebelnogo-proizvodstva"
+        },
+        {
+          "name": "Оператор-станочник деревообрабатывающего оборудования",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/operator-stanochnik-derevoobrabatyvayushhego-oborudovaniya-2"
+        },
+        {
+          "name": "Архитектура",
+          "professions": [
+            "Архитектор",
+            "Архитектор по рабочей документации",
+            "Помощник архитектора (чертёжник)"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/arhitektura"
+        },
+        {
+          "name": "Землеустройство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/zemelno-imushhestvennye-otnosheniya"
+        },
+        {
+          "name": "Информационное моделирование в строительстве",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/informaczionnoe-modelirovanie-v-stroitelstve"
+        },
+        {
+          "name": "Мастер отделочных строительных и декоративных работ",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/master-otdelochnyh-stroitelnyh-i-dekorativnyh-rabot"
+        },
+        {
+          "name": "Мастер столярно-плотничных, паркетных и стекольных работ",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/master-stolyarno-plotnichnyh-parketnyh-i-stekolnyh-rabot"
+        },
+        {
+          "name": "Монтаж и эксплуатация внутренних сантехнических устройств, кондиционирования воздуха и вентиляции",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/montazh-i-ekspluatacziya-vnutrennih-santehnicheskih-ustrojstv-kondiczionirovaniya-vozduha-i-ventilyaczii"
+        },
+        {
+          "name": "Монтаж, наладка и эксплуатация электрооборудования промышленных и гражданских зданий",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/montazh-naladka-i-ekspluatacziya-elektrooborudovaniya-promyshlennyh-i-grazhdanskih-zdanij"
+        },
+        {
+          "name": "Реставратор",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/restavrator-stroitelnyj"
+        },
+        {
+          "name": "Садово-парковое и ландшафтное строительство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/sadovo-parkovoe-i-landshaftnoe-stroitelstvo"
+        },
+        {
+          "name": "Сварочное производство",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/svarochnoe-proizvodstvo"
+        },
+        {
+          "name": "Сварщик (ручной и частично механизированной сварки (наплавки)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/svarshhik-ruchnoj-i-chastichno-mehanizirovannoj-svarki"
+        },
+        {
+          "name": "Строительство и эксплуатация зданий и сооружений",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/stroitelstvo-i-ekspluatacziya-zdanij-i-sooruzhenij"
+        },
+        {
+          "name": "Электромонтажник слаботочных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/elektromontazhnik-slabotochnyh-sistem"
+        },
+        {
+          "name": "Электромонтажник электрических сетей и электрооборудования",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/elektromontazhnik-elektricheskih-setej-i-elektrooborudovaniya"
+        }
+      ],
+      "addresses": [
+        "ЮЗАО, Профсоюзная улица 154к7, м. Теплый стан",
+        "ЮЗАО, Ратная улица 14а, м. Бульвар Дмитрия Донского",
+        "ЮВАО, Люблинская улица 131, м. Люблино",
+        "ЮЗАО, Ореховый бульвар 22, м. Красногвардейская",
+        "ЮВАО, улица Шкулева 13/25с2 , м. Волжская",
+        "ЮЗАО, улица Кржижановского 15к4, м. Профсоюзная"
+      ],
+      "contacts": [
+        "+7 (977) 750-71-62",
+        "stolitsa@edu.mos.ru",
+        "https://vk.com/okg_stolitsa",
+        "https://t.me/okgstolitsa"
+      ],
+      "website": "https://stolitsa.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/obrazovatelnyj-kompleks-gradostroitelstva-stolicza"
+    },
+    {
+      "name": "Политехнический колледж № 8 имени дважды Героя Советского Союза И.Ф. Павлова",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Аддитивные технологии",
+          "professions": [
+            "Разработчик управляющих программ",
+            "Специалист по контролю качества",
+            "Специалист по обратному проектированию"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/additivnye-tehnologii"
+        },
+        {
+          "name": "Дефектоскопист",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/defektoskopist-2"
+        },
+        {
+          "name": "Контролер качества в машиностроении",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/kontroler-kachestva-v-mashinostroenii"
+        },
+        {
+          "name": "Мастер слесарных работ",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/master-slesarnyh-rabot"
+        },
+        {
+          "name": "Метрологический контроль средств измерений",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/kontrol-raboty-izmeritelnyh-priborov"
+        },
+        {
+          "name": "Мехатроника и робототехника (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/mehatronika-i-mobilnaya-robototehnika"
+        },
+        {
+          "name": "Монтаж, техническое обслуживание и ремонт электронных приборов и устройств",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/montazh-tehnicheskoe-obsluzhivanie-i-remont-elektronnyh-priborov-i-ustrojstv"
+        },
+        {
+          "name": "Оператор-наладчик металлообрабатывающих станков",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/operator-naladchik-metalloobrabatyvayushhih-stankov"
+        },
+        {
+          "name": "Производство летательных аппаратов",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/proizvodstvo-letatelnyh-apparatov"
+        },
+        {
+          "name": "Промышленный дизайн (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/promyshlennyj-dizajn"
+        },
+        {
+          "name": "Техническая эксплуатация и обслуживание роботизированного производства (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnicheskaya-ekspluatacziya-i-obsluzhivanie-robotizirovannogo-proizvodstva-po-otraslyam"
+        },
+        {
+          "name": "Технология машиностроения",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/tehnologiya-mashinostroeniya"
+        },
+        {
+          "name": "Управление качеством продукции, процессов и услуг (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/upravlenie-kachestvom-produkczii-proczessov-i-uslug"
+        },
+        {
+          "name": "Эксплуатация беспилотных авиационных систем",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/ekspluatacziya-bespilotnyh-aviaczionnyh-sistem"
+        }
+      ],
+      "addresses": [
+        "САО, 1-й Хорошевский проезд 8с1, м. Беговая",
+        "ЮВАО, Волгоградский проспект 58к4, м. Кузьминки",
+        "САО, Дмитровское шоссе 110а, м. Яхромская",
+        "ЮВАО, Волгоградский проспект, д. 58, к. 4, м. Кузьминки"
+      ],
+      "contacts": [
+        "8 (495) 640-60-58 (доб. 1)",
+        "spo-8-priem@edu.mos.ru",
+        "https://vk.com/pk8.mskobr",
+        "https://t.me/pk8_mskobr"
+      ],
+      "website": "https://pk-8.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/politehnicheskij-kolledzh-8-imeni-dvazhdy-geroya-sovetskogo-soyuza-i-f-pavlova"
+    },
+    {
+      "name": "Технический пожарно-спасательный колледж имени Героя Российской Федерации В.М. Максимчука",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Защита в чрезвычайных ситуациях",
+          "professions": [
+            "Спасатель, пожарный",
+            "Специалист по гражданской обороне в организациях",
+            "Начальник караула, старший дежурной смены"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/zashhita-v-chrezvychajnyh-situacziyah"
+        },
+        {
+          "name": "Организация оперативного (экстренного) реагирования в чрезвычайных ситуациях",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/organizacziya-operativnogo-ekstrennogo-reagirovaniya-v-chrezvychajnyh-situacziyah"
+        },
+        {
+          "name": "Пожарная безопасность",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/pozharnaya-bezopasnost"
+        }
+      ],
+      "addresses": [
+        "ЮАО, 2-й Нагатинский проезд 4, м. Нагатинская",
+        "ЮАО, Нагатинская улица 4к2, м. Нагатинская",
+        "ЮЗАО, Ленинский проспект 97к4, м. Новаторская",
+        "ЮАО, Нагорная улица 11к1, м. Нагорная",
+        "САО, город Москва, Светлый проезд, дом 2 А, м. Войсковская/МЦК Стрешнево"
+      ],
+      "contacts": [
+        "8 (499) 158-69-01",
+        "IvinaTV@edu.mos.ru",
+        "https://vk.com/tpskgbpou",
+        "https://t.me/gpou_tpsk"
+      ],
+      "website": "https://college57.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/tehnicheskij-pozharno-spasatelnyj-kolledzh-imeni-geroya-rossijskoj-federaczii-v-m-maksimchuka"
+    },
+    {
+      "name": "Финансовый колледж № 35",
+      "aliases": [],
+      "specialties": [
+        {
+          "name": "Банковское дело",
+          "professions": [
+            "Специалист операционно-кассового обслуживания",
+            "Клиентский (банковский) менеджер",
+            "Менеджер выездного сервиса"
+          ],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/bankovskoe-delo"
+        },
+        {
+          "name": "Финансы",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/finansy"
+        },
+        {
+          "name": "Экономика и бухгалтерский учет (по отраслям)",
+          "professions": [],
+          "atlas_url": "https://colleges.shkolamoskva.ru/atlas/ekonomika-i-buhgalterskij-uchet"
+        }
+      ],
+      "addresses": [
+        "ЮЗАО, Чонгарский бульвар 25с1, м. Каховская",
+        "ЮАО, Липецкая улица 2к13, м. Царицыно"
+      ],
+      "contacts": [
+        "8 (495) 327-81-33",
+        "spo-35@edu.mos.ru",
+        "https://vk.com/kolledzh35",
+        "https://t.me/finkolledzh35"
+      ],
+      "website": "https://35finance.mskobr.ru/",
+      "atlas_url": "https://colleges.shkolamoskva.ru/atlas/college/finansovyj-kolledzh-35"
+    }
+  ],
+  "faq": []
+}

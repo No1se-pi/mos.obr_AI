@@ -471,11 +471,10 @@ class ChatServiceRegressionTest(unittest.TestCase):
         self.assertIn("ИТ.Москва", answer)
         self.assertIn("не буду выдумывать", answer)
 
-    def test_smart_clarification_for_unknown_profession_is_specific(self) -> None:
+    def test_smart_clarification_does_not_claim_kinology_is_missing(self) -> None:
         answer = self.service.render_smart_clarification("где учат на кинолога", [])
 
-        self.assertIn("кинолога", answer)
-        self.assertIn(ATLAS_URL, answer)
+        self.assertNotIn("не вижу точного направления «кинолог»", answer)
         self.assertNotIn("Я на связи", answer)
 
     def test_detail_followup_asks_number_for_multiple_previous_options(self) -> None:

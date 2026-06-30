@@ -269,6 +269,69 @@ CONSTRUCTION_EXCLUDE_WITHOUT_CONTEXT = (
     "веб-разработка",
 )
 
+INDUSTRY_PAGE_ITEM_LIMIT = 60
+
+STRICT_INDUSTRY_INCLUDE_MARKERS: dict[str, tuple[str, ...]] = {
+    "it": (
+        "администрирование",
+        "базы данных",
+        "беспилот",
+        "бпла",
+        "веб",
+        "интеллектуаль",
+        "информацион",
+        "искусственного интеллекта",
+        "компьютер",
+        "программ",
+        "разработка электронных",
+        "сетевое",
+        "систем",
+        "цифров",
+        "электронных устройств",
+    ),
+    "law": (
+        "правоохран",
+        "юрид",
+        "юриспруден",
+    ),
+    "tourism": (
+        "гостеприим",
+        "сервис индустрии чистоты",
+        "сервис на транспорте",
+        "туризм",
+        "флорист",
+    ),
+    "finance": (
+        "банков",
+        "бухгалтер",
+        "казнач",
+        "финанс",
+        "эконом",
+    ),
+}
+
+STRICT_INDUSTRY_EXCLUDE_MARKERS: dict[str, tuple[str, ...]] = {
+    "it": (
+        "банковское дело",
+        "гостеприим",
+        "сервис на транспорте",
+        "туризм",
+        "флорист",
+    ),
+    "tourism": (
+        "банковское дело",
+        "бухгалтер",
+        "казнач",
+        "финанс",
+    ),
+    "finance": (
+        "гостеприим",
+        "сервис на транспорте",
+        "туризм",
+        "флорист",
+    ),
+}
+
 
 @dataclass(slots=True)
 class ScenarioAnswer:
@@ -497,16 +560,28 @@ class ScenarioService:
         if action_code == "back":
             return self.handle_back(db, session, state, message).as_dict()
 
-        if action_code.startswith("college_") or route == "college" or state.get("current_route") == "college":
+        if action_code.startswith("college_") or route == "college":
             return self.handle_college(db, session, state, message, action_code).as_dict()
 
-        if action_code.startswith("profession_") or action_code.startswith(("industry_", "industry:")) or route == "profession" or state.get("current_route") == "profession":
+        if action_code.startswith("profession_") or action_code.startswith(("industry_", "industry:")) or route == "profession":
             return self.handle_profession(db, session, state, message, action_code).as_dict()
 
-        if action_code.startswith(("admission_", "admission_topic:")) or route == "admission" or state.get("current_route") == "admission":
+        if action_code.startswith(("admission_", "admission_topic:")) or route == "admission":
             return self.handle_admission(db, session, state, message, action_code, top_k=top_k).as_dict()
 
-        if action_code.startswith("custom_") or route == "custom" or state.get("current_route") == "custom":
+        if action_code.startswith("custom_") or route == "custom":
+            return self.handle_custom(db, session, state, message, action_code, top_k=top_k).as_dict()
+
+        if state.get("current_route") == "college":
+            return self.handle_college(db, session, state, message, action_code).as_dict()
+
+        if state.get("current_route") == "profession":
+            return self.handle_profession(db, session, state, message, action_code).as_dict()
+
+        if state.get("current_route") == "admission":
+            return self.handle_admission(db, session, state, message, action_code, top_k=top_k).as_dict()
+
+        if state.get("current_route") == "custom":
             return self.handle_custom(db, session, state, message, action_code, top_k=top_k).as_dict()
 
         # Backward-compatible old client path: do not drop into unrestricted chat;
@@ -1138,6 +1213,7 @@ class ScenarioService:
             "specialty": self.chat_service.extract_specialty_name(doc),
             "professions": [str(item).strip() for item in (doc.metadata_json.get("professions") or []) if str(item).strip()],
             "website": str(doc.metadata_json.get("website") or "").strip(),
+            "specialty_url": str(doc.metadata_json.get("specialty_url") or "").strip(),
         }
 
     def entry_from_catalog(self, item: dict[str, Any]) -> dict[str, Any]:
@@ -1146,6 +1222,7 @@ class ScenarioService:
             "specialty": str(item.get("specialty") or "").strip(),
             "professions": [str(value).strip() for value in (item.get("professions") or []) if str(value).strip()],
             "website": str(item.get("website") or "").strip(),
+            "specialty_url": str(item.get("specialty_url") or "").strip(),
         }
 
     def handle_profession(self, db: Session, session, state: dict[str, Any], message: str, action_code: str) -> ScenarioAnswer:
@@ -1324,29 +1401,52 @@ class ScenarioService:
             title = str(payload.get("title") or key)
             entries = [self.entry_from_catalog(item) for item in payload.get("college_specialties", []) if isinstance(item, dict)]
 
-        seen: set[str] = set()
+        seen: set[tuple[str, str]] = set()
         result: list[dict[str, Any]] = []
         for entry in entries:
             specialty = str(entry.get("specialty") or "").strip()
             if not specialty:
                 continue
             norm = normalize_label(specialty)
+            if not self.industry_entry_matches(key, entry):
+                continue
             if key == "construction" and any(marker in norm for marker in CONSTRUCTION_EXCLUDE_WITHOUT_CONTEXT):
                 continue
-            if norm in seen:
+            college = str(entry.get("college") or "").strip()
+            dedupe_key = (self.chat_service.college_key(college) if college else "", norm)
+            if dedupe_key in seen:
                 continue
-            seen.add(norm)
+            seen.add(dedupe_key)
             professions = entry.get("professions") or []
             result.append(
                 {
+                    "college": college,
                     "specialty": specialty,
                     "why": self.specialty_why(specialty),
                     "professions": professions,
+                    "website": str(entry.get("website") or "").strip(),
+                    "specialty_url": str(entry.get("specialty_url") or "").strip(),
                 }
             )
-            if len(result) >= 18:
+            if len(result) >= INDUSTRY_PAGE_ITEM_LIMIT:
                 break
         return title, result
+
+    def industry_entry_matches(self, key: str, entry: dict[str, Any]) -> bool:
+        haystack = normalize_label(
+            " ".join(
+                [
+                    str(entry.get("specialty") or ""),
+                    " ".join(str(value) for value in (entry.get("professions") or [])),
+                ]
+            )
+        )
+        includes = STRICT_INDUSTRY_INCLUDE_MARKERS.get(key, ())
+        if includes and not any(marker in haystack for marker in includes):
+            return False
+
+        excludes = STRICT_INDUSTRY_EXCLUDE_MARKERS.get(key, ())
+        return not any(marker in haystack for marker in excludes)
 
     def production_specialty_entries(self, db: Session) -> list[dict[str, Any]]:
         docs = db.scalars(select(Document).where(Document.doc_type == "specialty")).all()
@@ -2013,6 +2113,7 @@ class ScenarioService:
                         "specialty": specialty,
                         "why": f"в базе связана с профессией «{match.display_name}»",
                         "professions": professions,
+                        "specialty_url": str(raw.get("specialty_url") or "").strip(),
                     }
                 )
                 if len(result) >= limit:
@@ -2030,6 +2131,7 @@ class ScenarioService:
                     "specialty": specialty,
                     "why": self.specialty_why(specialty),
                     "professions": professions,
+                    "specialty_url": str(doc.metadata_json.get("specialty_url") or "").strip(),
                 }
             )
             if len(result) >= limit:
@@ -2054,6 +2156,7 @@ class ScenarioService:
                     "specialty": specialty,
                     "why": self.specialty_why(specialty),
                     "professions": [str(value).strip() for value in (entry.get("professions") or []) if str(value).strip()],
+                    "specialty_url": str(entry.get("specialty_url") or "").strip(),
                 }
             )
             if len(result) >= limit:
@@ -2078,6 +2181,7 @@ class ScenarioService:
                     "specialty": specialty,
                     "why": self.specialty_why(specialty),
                     "professions": [str(value).strip() for value in (doc.metadata_json.get("professions") or []) if str(value).strip()],
+                    "specialty_url": str(doc.metadata_json.get("specialty_url") or "").strip(),
                 }
             )
             if len(result) >= limit:
@@ -2104,11 +2208,17 @@ class ScenarioService:
         lines = [title]
         for idx, item in enumerate(page, start=offset + 1):
             lines.append("")
+            college = str(item.get("college") or "").strip()
             lines.append(f"{idx}. Специальность: {item.get('specialty', '')}")
+            if college:
+                lines.append(f"   Колледж: {college}")
             lines.append(f"   Почему подходит: {item.get('why') or 'связана с выбранным направлением'}.")
             professions = item.get("professions") or []
             if professions:
                 lines.append(f"   После обучения: {', '.join(str(p) for p in professions[:3])}")
+            specialty_url = str(item.get("specialty_url") or "").strip()
+            if specialty_url:
+                lines.append(f"   Подробнее: {specialty_url}")
 
         new_offset = offset + len(page)
         last_results = dict(last_results)

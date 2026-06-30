@@ -1,6 +1,5 @@
 import random
 import re
-from collections import Counter
 from typing import Iterable
 
 from sqlalchemy import func, select
@@ -1176,6 +1175,9 @@ class ChatService:
             lines.append(f"{added + 1}. {college_name} — {specialty_name}")
             if professions:
                 lines.append(f"   После обучения: {', '.join(professions[:3])}")
+            specialty_url = str(entry.get("specialty_url", "") or "").strip()
+            if specialty_url:
+                lines.append(f"   Подробнее о специальности: {specialty_url}")
             website = str(entry.get("website", "")).strip()
             if website:
                 lines.append(f"   Сайт: {website}")
@@ -1234,6 +1236,9 @@ class ChatService:
             lines.append(f"{added + 1}. {college_name} — {specialty_name}")
             if professions:
                 lines.append(f"   После обучения: {', '.join(professions[:3])}")
+            specialty_url = str(entry.get("specialty_url", "") or "").strip()
+            if specialty_url:
+                lines.append(f"   Подробнее о специальности: {specialty_url}")
             website = str(entry.get("website", "")).strip()
             if website:
                 lines.append(f"   Сайт: {website}")
@@ -1272,6 +1277,9 @@ class ChatService:
 
     def extract_specialty_name(self, doc: Document) -> str:
         return str(doc.metadata_json.get("specialty_name", "")).strip()
+
+    def extract_specialty_url(self, doc: Document) -> str:
+        return str(doc.metadata_json.get("specialty_url", "") or "").strip()
 
     def canonical_college_from_text(self, text: str) -> str | None:
         normalized = self.normalize_text(text).replace("ё", "е")
@@ -1438,6 +1446,9 @@ class ChatService:
             line = f"{idx}. {spec}"
             if professions:
                 line += f" — после обучения: {', '.join(str(p) for p in professions[:3])}"
+            specialty_url = self.extract_specialty_url(doc)
+            if specialty_url:
+                line += f" — подробнее: {specialty_url}"
             lines.append(line)
 
         if college_card:
@@ -1569,6 +1580,9 @@ class ChatService:
         spec = self.extract_specialty_name(doc)
         professions = doc.metadata_json.get("professions", []) or []
         lines = [f"{spec} — что видно по моей базе:"]
+        specialty_url = self.extract_specialty_url(doc)
+        if specialty_url:
+            lines.append(f"Страница в Атласе: {specialty_url}")
         if professions:
             lines.append(f"После обучения можно ориентироваться на профессии: {', '.join(str(p) for p in professions[:5])}.")
 
@@ -1857,6 +1871,9 @@ class ChatService:
             lines.append(f"{added + 1}. {college_name} — {specialty_name}")
             if professions:
                 lines.append(f"   После обучения: {', '.join(professions[:3])}")
+            specialty_url = self.extract_specialty_url(doc)
+            if specialty_url:
+                lines.append(f"   Подробнее о специальности: {specialty_url}")
             lines.append("   Почему это может подойти: направление связано с запросом и есть в базе колледжей Москвы.")
             seen_colleges.add(college_name)
             added += 1
@@ -1907,6 +1924,9 @@ class ChatService:
                     line = f"- {spec}"
                     if professions:
                         line += f" → после обучения: {', '.join(professions[:2])}"
+                    specialty_url = self.extract_specialty_url(doc)
+                    if specialty_url:
+                        line += f" → {specialty_url}"
                     lines.append(line)
 
         if college_card:
@@ -2177,6 +2197,9 @@ class ChatService:
                     line = f"- {college}: {spec}"
                     if professions:
                         line += f" → после обучения: {', '.join(professions[:3])}"
+                    specialty_url = self.extract_specialty_url(doc)
+                    if specialty_url:
+                        line += f" → {specialty_url}"
                     lines.append(line)
             lines.append("Чтобы понять, подходит ли направление, сравни не только колледжи, но и будущие профессии: чем люди реально занимаются после обучения.")
             return "\n".join(lines)
@@ -2338,13 +2361,6 @@ class ChatService:
 
     def render_smart_clarification(self, user_query: str, previous_messages) -> str:
         q = self.normalize_text(user_query).replace("ё", "е")
-        if "кинолог" in q:
-            return (
-                "Похоже, ты спрашиваешь про обучение на кинолога. В моей базе московских колледжей я не вижу точного направления «кинолог», "
-                "поэтому не буду придумывать колледж.\n\n"
-                f"Лучше проверить Атлас профессий: {ATLAS_URL} или уточнить через общую поддержку: "
-                f"{GENERAL_ADMISSION_SUPPORT_PHONE}, {GENERAL_ADMISSION_SUPPORT_EMAIL}."
-            )
         if "нейросет" in q or "искусственн интеллект" in q:
             return (
                 "Похоже, тебе интересны нейросети и ИИ. В базе это лучше искать не словом «нейросети», а через IT-направления: "

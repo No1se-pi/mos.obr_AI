@@ -187,6 +187,11 @@ def calculate_college_profile_scores(college: dict[str, Any]) -> dict[str, float
 def build_college_document(college: dict[str, Any]) -> dict[str, Any]:
     specialties = college.get("specialties", [])
     specialty_names = [spec.get("name", "") for spec in specialties]
+    specialty_urls = {
+        spec.get("name", ""): spec.get("atlas_url", "")
+        for spec in specialties
+        if spec.get("name") and spec.get("atlas_url")
+    }
     profile_scores = calculate_college_profile_scores(college)
 
     content_parts = [
@@ -208,7 +213,9 @@ def build_college_document(college: dict[str, Any]) -> dict[str, Any]:
             "addresses": college.get("addresses", []),
             "contacts": college.get("contacts", []),
             "website": college.get("website", ""),
+            "atlas_url": college.get("atlas_url", ""),
             "specialties": specialty_names,
+            "specialty_urls": specialty_urls,
             "domain_tags": collect_domain_tags(
                 college.get("name", ""),
                 " ".join(specialty_names),
@@ -225,6 +232,7 @@ def build_specialty_documents(college: dict[str, Any]) -> list[dict[str, Any]]:
     for specialty in college.get("specialties", []):
         specialty_name = specialty.get("name", "")
         professions = specialty.get("professions", [])
+        specialty_url = specialty.get("atlas_url", "")
         domain_tags = collect_domain_tags(specialty_name, " ".join(professions))
 
         content_parts = [
@@ -235,6 +243,8 @@ def build_specialty_documents(college: dict[str, Any]) -> list[dict[str, Any]]:
             f"Контакты: {', '.join(college.get('contacts', []))}",
             f"Сайт: {college.get('website', '')}",
         ]
+        if specialty_url:
+            content_parts.append(f"Атлас профессий: {specialty_url}")
 
         documents.append(
             {
@@ -248,6 +258,8 @@ def build_specialty_documents(college: dict[str, Any]) -> list[dict[str, Any]]:
                     "addresses": college.get("addresses", []),
                     "contacts": college.get("contacts", []),
                     "website": college.get("website", ""),
+                    "atlas_url": college.get("atlas_url", ""),
+                    "specialty_url": specialty_url,
                     "domain_tags": domain_tags,
                     "college_profile_scores": profile_scores,
                 },

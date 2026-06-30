@@ -81,11 +81,13 @@ def build_reference_indexes(colleges: list[dict[str, Any]]) -> tuple[dict[str, A
     for college in colleges:
         college_name = str(college.get("name", "")).strip()
         website = str(college.get("website", "")).strip()
+        atlas_url = str(college.get("atlas_url", "")).strip()
         addresses = [str(item).strip() for item in college.get("addresses", []) if str(item).strip()]
         contacts = [str(item).strip() for item in college.get("contacts", []) if str(item).strip()]
 
         for specialty in college.get("specialties", []):
             specialty_name = str(specialty.get("name", "")).strip()
+            specialty_url = str(specialty.get("atlas_url", "")).strip()
             professions = unique_keep_order([str(p) for p in specialty.get("professions", [])])
             domain_tags = collect_domain_tags(specialty_name, " ".join(professions))
 
@@ -94,6 +96,8 @@ def build_reference_indexes(colleges: list[dict[str, Any]]) -> tuple[dict[str, A
                 "specialty": specialty_name,
                 "professions": professions,
                 "website": website,
+                "atlas_url": atlas_url,
+                "specialty_url": specialty_url,
                 "contacts": contacts,
                 "addresses": addresses,
                 "industry_tags": domain_tags,

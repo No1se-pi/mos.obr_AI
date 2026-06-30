@@ -13,12 +13,14 @@ def normalize_college(college: dict[str, Any]) -> dict[str, Any]:
     return {
         "name": clean_text(college.get("name", "")),
         "aliases": [clean_text(a) for a in college.get("aliases", [])],
+        "atlas_url": clean_text(college.get("atlas_url", "")),
         "specialties": [
             {
                 "name": clean_text(spec.get("name", "")),
                 "professions": [
                     clean_text(p) for p in spec.get("professions", [])
                 ],
+                "atlas_url": clean_text(spec.get("atlas_url", "")),
             }
             for spec in college.get("specialties", [])
         ],
