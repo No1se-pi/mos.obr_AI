@@ -384,9 +384,18 @@ class ChatServiceRegressionTest(unittest.TestCase):
     def test_soft_faq_wording_for_sensitive_unknowns(self) -> None:
         svo = self.service.render_common_faq_answer("отец участник сво - какие льготы")
         self.assertIsNotNone(svo)
-        self.assertIn("первоочередном праве зачисления", svo)
-        self.assertIn("подтверждать официальными документами", svo)
+        self.assertIn("Первоочередное право зачисления", svo)
+        self.assertIn("участники СВО", svo)
+        self.assertIn("свидетельство о рождении", svo)
+        self.assertIn("справки об участии в СВО", svo)
+        self.assertNotIn("Кратко:", svo)
+        self.assertNotIn("Важно:", svo)
         self.assertNotIn("не буду придумывать", svo.lower())
+
+        general_benefits = self.service.render_common_faq_answer("есть ли льготы военнослужащим при поступлении")
+        self.assertIsNotNone(general_benefits)
+        self.assertNotIn("СВО", general_benefits)
+        self.assertNotIn("справки об участии в СВО", general_benefits)
 
         exams = self.service.render_common_faq_answer("какие ВИ нужно сдавать на разные специальности")
         self.assertIsNotNone(exams)

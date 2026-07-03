@@ -30,8 +30,18 @@ class FakeChatService:
     def extract_specialty_name(self, doc) -> str:
         return str(doc.metadata_json.get("specialty_name") or "")
 
+    def extract_specialty_url(self, doc) -> str:
+        return str(doc.metadata_json.get("specialty_url") or "")
+
     def college_key(self, name: str) -> str:
         return name.lower().strip()
+
+    def college_name_matches(self, actual: str, canonical: str) -> bool:
+        return self.college_key(actual) == self.college_key(canonical)
+
+    def get_all_specialty_docs_for_college(self, db, college_name: str):
+        docs = db.query(Document).filter(Document.doc_type == "specialty").all()
+        return [doc for doc in docs if self.college_name_matches(self.extract_college_name(doc), college_name)]
 
     def get_reference_catalog(self):
         return self.reference_catalog
@@ -59,6 +69,10 @@ class ScenarioServiceTest(unittest.TestCase):
             "college_start",
         )
         self.assertEqual(
+            self.service.resolve_action(message="Хочу поступить", route=None, action=None),
+            "set_applicant",
+        )
+        self.assertEqual(
             self.service.resolve_action(message="Абитуриент / поступающий", route=None, action=None),
             "set_applicant",
         )
@@ -75,6 +89,10 @@ class ScenarioServiceTest(unittest.TestCase):
             "admission_topic:campaign_2026_2027",
         )
         self.assertEqual(
+            self.service.resolve_action(message="Поступление в колледж", route=None, action=None),
+            "admission_topic:campaign_2026_2027",
+        )
+        self.assertEqual(
             self.service.resolve_action(message="Льготы при поступлении", route=None, action=None),
             "admission_topic:benefits",
         )
@@ -87,7 +105,7 @@ class ScenarioServiceTest(unittest.TestCase):
             "admission_topic:svo_priority",
         )
         self.assertEqual(
-            self.service.resolve_action(message="1. Подробнее", route=None, action=None),
+            self.service.resolve_action(message="Специальность 1", route=None, action=None),
             "pick:1",
         )
         self.assertEqual(
@@ -96,7 +114,7 @@ class ScenarioServiceTest(unittest.TestCase):
         )
         self.assertEqual(
             self.service.resolve_action(
-                message="Педагогика и работа с детьми",
+                message="Образование и социальная сфера",
                 route="profession",
                 action="select_industry",
             ),
@@ -109,7 +127,8 @@ class ScenarioServiceTest(unittest.TestCase):
 
     def test_svo_topic_is_hidden_from_admission_buttons(self) -> None:
         self.assertNotIn("СВО и первоочередное право", ADMISSION_TOPIC_BUTTONS)
-        self.assertIn("Приёмная кампания 2026/27", ADMISSION_TOPIC_BUTTONS)
+        self.assertNotIn("Отсрочка от армии", ADMISSION_TOPIC_BUTTONS)
+        self.assertIn("Поступление в колледж", ADMISSION_TOPIC_BUTTONS)
         self.assertIn("Льготы при поступлении", ADMISSION_TOPIC_BUTTONS)
         self.assertIn("Поступление иностранцев", ADMISSION_TOPIC_BUTTONS)
 
@@ -119,7 +138,7 @@ class ScenarioServiceTest(unittest.TestCase):
         db = sessionmaker(bind=engine)()
 
         service = ScenarioService(chat_service=FakeChatService())
-        first = service.ask(db, "u_admission", "Абитуриент / поступающий")
+        first = service.ask(db, "u_admission", "Хочу поступить")
         result = service.ask(
             db,
             "u_admission",
@@ -133,16 +152,92 @@ class ScenarioServiceTest(unittest.TestCase):
         self.assertNotIn("8 495", result["answer"])
         self.assertIn("Какие документы нужны", result["suggestions"])
 
+    def test_rules_answer_links_to_admission_atlas(self) -> None:
+        answer = self.service.render_admission_topic_answer("rules_2026", {"user_type": "applicant"})
+
+        self.assertIsNotNone(answer)
+        self.assertIn("https://school.mos.ru/mcrpo/portal/admission/", answer)
+
+    def test_general_benefits_answer_does_not_name_svo_unprompted(self) -> None:
+        answer = self.service.render_admission_topic_answer("benefits", {"user_type": "applicant"})
+
+        self.assertIsNotNone(answer)
+        self.assertNotIn("СВО", answer)
+        self.assertNotIn("ветеран", answer.lower())
+        self.assertNotIn("вдовы", answer.lower())
+
+    def test_svo_requires_direct_context(self) -> None:
+        self.assertFalse(self.service.has_svo_priority_query("Есть ли льготы военнослужащим при поступлении в колледж?"))
+        self.assertTrue(self.service.has_svo_priority_query("Есть ли льготы детям участников СВО?"))
+        self.assertTrue(self.service.has_svo_priority_query("Куда прикрепить справку об участии в СВО?"))
+
+    def test_first_empty_message_opens_main_menu_without_role_choice(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+
+        service = ScenarioService(chat_service=FakeChatService())
+        result = service.ask(db, "u_no_role", "")
+
+        self.assertEqual(result["route"], "main_menu")
+        self.assertEqual(result["step"], "main_menu")
+        self.assertIn("Давай выберем, с чего начать.", result["answer"])
+        self.assertIn("Выбрать колледж", result["suggestions"])
+        self.assertIn("Выбрать профессию", result["suggestions"])
+        self.assertNotIn("Хочу поступить", result["suggestions"])
+        self.assertNotIn("Хочу узнать информацию", result["suggestions"])
+
+    def test_ovz_answer_has_detailed_branches(self) -> None:
+        answer = self.service.render_admission_topic_answer("ovz", {"user_type": "applicant"})
+
+        self.assertIsNotNone(answer)
+        self.assertIn("mos.ru", answer)
+        self.assertIn("ЦПМПК", answer)
+        self.assertIn("ИПРА", answer)
+        self.assertIn("адаптированы", answer)
+        self.assertIn("Профессиональное обучение без границ", answer)
+        self.assertIn("https://pobg.mcrpo.ru/ovz/", answer)
+
     def test_first_role_answer_is_natural(self) -> None:
         applicant = self.service.main_menu_text({"user_type": "applicant"}, first_time=True)
         parent = self.service.main_menu_text({"user_type": "parent"}, first_time=True)
 
-        self.assertIn("Привет!", applicant)
-        self.assertIn("следующую ступень", applicant)
-        self.assertIn("Здравствуйте!", parent)
-        self.assertIn("Выберите, с чего удобнее начать", parent)
+        self.assertEqual(applicant, "Давай выберем, с чего начать.")
+        self.assertEqual(parent, "Давайте выберем, с чего начать.")
+        self.assertNotIn("Привет", applicant)
+        self.assertNotIn("Здравствуйте", parent)
         self.assertNotIn("Буду объяснять", applicant)
         self.assertNotIn("Буду обращаться", parent)
+
+    def test_support_contacts_are_appended_to_content_answers_only(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+        db.add(
+            Document(
+                doc_type="college",
+                title="КАИТ 20",
+                content="Колледж автоматизации и информационных технологий № 20 готовит специалистов для IT.",
+                metadata_json={
+                    "college_name": "Колледж автоматизации и информационных технологий № 20",
+                    "specialties": ["Веб-разработка"],
+                },
+                embedding_json=[],
+            )
+        )
+        db.commit()
+
+        service = ScenarioService(chat_service=FakeChatService())
+        first = service.ask(db, "u_support", "Хочу поступить")
+        service.ask(db, "u_support", "Выбрать колледж", session_id=first["session_id"])
+        service.ask(db, "u_support", "Найти конкретный колледж", session_id=first["session_id"])
+        found = service.ask(db, "u_support", "КАИТ 20", session_id=first["session_id"])
+
+        self.assertNotIn("+7 (495) 568-00-88", first["answer"])
+        self.assertIn("ответ сформирован ИИ", found["answer"])
+        self.assertTrue(found["answer"].endswith("spo@edu.mos.ru"))
+        self.assertIn("Если остались вопросы:", found["answer"])
+        self.assertIn("https://колледжмосква.рф/#forma", found["answer"])
 
     def test_parent_tone_rewrites_common_phrases(self) -> None:
         text = "Если хочешь, напиши, что тебе интересно."
@@ -172,7 +267,7 @@ class ScenarioServiceTest(unittest.TestCase):
         db.commit()
 
         service = ScenarioService(chat_service=FakeChatService())
-        first = service.ask(db, "u1", "Абитуриент / поступающий")
+        first = service.ask(db, "u1", "Хочу поступить")
         route = service.ask(db, "u1", "Выбрать колледж", session_id=first["session_id"])
         prompt = service.ask(db, "u1", "Найти конкретный колледж", session_id=first["session_id"])
         found = service.ask(db, "u1", "КАИТ 20", session_id=first["session_id"])
@@ -181,6 +276,147 @@ class ScenarioServiceTest(unittest.TestCase):
         self.assertEqual(prompt["step"], "awaiting_college_name")
         self.assertEqual(found["step"], "college_found")
         self.assertIn("Все специальности", found["suggestions"])
+
+    def test_college_card_does_not_show_aliases(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+        db.add(
+            Document(
+                doc_type="college",
+                title="КАИТ 20",
+                content=(
+                    "Колледж: Колледж автоматизации и информационных технологий № 20\n"
+                    "Алиасы: КАИТ 20, 20 колледж, КАИТ, 20\n"
+                    "Специальности: Веб-разработка\n"
+                    "Адреса: Москва"
+                ),
+                metadata_json={
+                    "college_name": "Колледж автоматизации и информационных технологий № 20",
+                    "aliases": ["КАИТ 20", "20 колледж", "КАИТ", "20"],
+                    "specialties": ["Веб-разработка"],
+                    "addresses": ["Москва"],
+                    "website": "https://example.edu",
+                },
+                embedding_json=[],
+            )
+        )
+        db.commit()
+
+        service = ScenarioService(chat_service=FakeChatService())
+        first = service.ask(db, "u_aliases", "Хочу поступить")
+        service.ask(db, "u_aliases", "Выбрать колледж", session_id=first["session_id"])
+        service.ask(db, "u_aliases", "Найти конкретный колледж", session_id=first["session_id"])
+        found = service.ask(db, "u_aliases", "КАИТ 20", session_id=first["session_id"])
+
+        self.assertIn("Колледж:", found["answer"])
+        self.assertIn("Что можно посмотреть дальше:", found["answer"])
+        self.assertNotIn("Алиасы:", found["answer"])
+        self.assertNotIn("КАИТ 20, 20 колледж", found["answer"])
+
+    def test_college_card_includes_fit_summary_by_profiles(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+        db.add(
+            Document(
+                doc_type="college",
+                title="ИТ колледж",
+                content="Колледж: ИТ колледж",
+                metadata_json={
+                    "college_name": "ИТ колледж",
+                    "specialties": ["Веб-разработка", "Сетевое и системное администрирование"],
+                    "college_profile_scores": {"it": 2},
+                },
+                embedding_json=[],
+            )
+        )
+        db.commit()
+
+        service = ScenarioService(chat_service=FakeChatService())
+        answer = service.render_college_found(db, "ИТ колледж")
+
+        self.assertIn("Кому подойдёт:", answer)
+        self.assertIn("ИТ- и цифровые направления", answer)
+        self.assertIn("Веб-разработка", answer)
+
+    def test_college_card_mentions_mixed_profiles(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+        db.add(
+            Document(
+                doc_type="college",
+                title="Многопрофильный колледж",
+                content="Колледж: Многопрофильный колледж",
+                metadata_json={
+                    "college_name": "Многопрофильный колледж",
+                    "specialties": ["Веб-разработка", "Строительство и эксплуатация зданий и сооружений"],
+                    "college_profile_scores": {"it": 1, "construction": 1},
+                },
+                embedding_json=[],
+            )
+        )
+        db.commit()
+
+        service = ScenarioService(chat_service=FakeChatService())
+        answer = service.render_college_found(db, "Многопрофильный колледж")
+
+        self.assertIn("смешанный профиль", answer)
+        self.assertIn("ИТ и цифровые технологии", answer)
+        self.assertIn("Строительство и инженерия", answer)
+        self.assertIn("Веб-разработка", answer)
+        self.assertIn("Строительство и эксплуатация зданий и сооружений", answer)
+
+    def test_college_specialties_are_paginated_by_four(self) -> None:
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        db = sessionmaker(bind=engine)()
+        college_name = "Колледж автоматизации и информационных технологий № 20"
+        db.add(
+            Document(
+                doc_type="college",
+                title="КАИТ 20",
+                content=f"Колледж: {college_name}",
+                metadata_json={"college_name": college_name},
+                embedding_json=[],
+            )
+        )
+        db.add_all(
+            [
+                Document(
+                    doc_type="specialty",
+                    title=f"Специальность {idx}",
+                    content="",
+                    metadata_json={
+                        "college_name": college_name,
+                        "specialty_name": f"Специальность {idx}",
+                        "professions": [f"Профессия {idx}"],
+                        "specialty_url": f"https://example.edu/spec-{idx}",
+                    },
+                    embedding_json=[],
+                )
+                for idx in range(1, 6)
+            ]
+        )
+        db.commit()
+
+        service = ScenarioService(chat_service=FakeChatService())
+        first = service.ask(db, "u_specs", "Хочу поступить")
+        service.ask(db, "u_specs", "Выбрать колледж", session_id=first["session_id"])
+        service.ask(db, "u_specs", "Найти конкретный колледж", session_id=first["session_id"])
+        service.ask(db, "u_specs", "КАИТ 20", session_id=first["session_id"])
+        page_one = service.ask(db, "u_specs", "Все специальности", session_id=first["session_id"])
+        page_two = service.ask(db, "u_specs", "", session_id=first["session_id"], action="show_more_specialties")
+
+        self.assertIn("Показываю 1-4 из 5", page_one["answer"])
+        self.assertIn("1. Специальность 1", page_one["answer"])
+        self.assertIn("4. Специальность 4", page_one["answer"])
+        self.assertNotIn("5. Специальность 5", page_one["answer"])
+        self.assertIn("Показать ещё специальности", page_one["suggestions"])
+        self.assertIn("Показываю 5-5 из 5", page_two["answer"])
+        self.assertIn("5. Специальность 5", page_two["answer"])
+        self.assertNotIn("1. Специальность 1", page_two["answer"])
 
     def test_first_request_can_execute_route_action_with_user_type(self) -> None:
         engine = create_engine("sqlite:///:memory:")
@@ -383,6 +619,7 @@ class ScenarioServiceTest(unittest.TestCase):
 
         self.assertIn("1. Специальность", first.answer)
         self.assertIn("https://colleges.shkolamoskva.ru/atlas/speczialnost-1", first.answer)
+        self.assertIn("Специальность 1", first.suggestions)
         self.assertIn("4. Специальность", second["answer"])
         self.assertIn("Показать ещё специальности", second["suggestions"])
         self.assertIn("7. Специальность", third["answer"])
@@ -420,7 +657,7 @@ class ScenarioServiceTest(unittest.TestCase):
         self.assertIn("4. Специальность", result["answer"])
         self.assertNotIn("Ты уже знаешь колледж", result["answer"])
 
-    def test_law_industry_keeps_college_specialty_pairs(self) -> None:
+    def test_law_industry_deduplicates_specialties(self) -> None:
         engine = create_engine("sqlite:///:memory:")
         Base.metadata.create_all(engine)
         db = sessionmaker(bind=engine)()
@@ -443,13 +680,12 @@ class ScenarioServiceTest(unittest.TestCase):
         service = ScenarioService(chat_service=FakeChatService(reference_catalog=catalog))
         _, items = service.industry_specialty_options(db, "law")
 
-        pairs = {(item["college"], item["specialty"]) for item in items}
-        self.assertIn(("Колледж полиции", "Юриспруденция"), pairs)
-        self.assertIn(("Юридический колледж", "Юриспруденция"), pairs)
-        self.assertIn(("Колледж полиции", "Правоохранительная деятельность"), pairs)
-        self.assertNotIn(("Колледж сервиса", "Туризм и гостеприимство"), pairs)
+        names = [item["specialty"] for item in items]
+        self.assertEqual(names.count("Юриспруденция"), 1)
+        self.assertIn("Правоохранительная деятельность", names)
+        self.assertNotIn("Туризм и гостеприимство", names)
 
-    def test_law_industry_more_button_pages_through_colleges(self) -> None:
+    def test_law_industry_more_button_pages_through_unique_specialties(self) -> None:
         engine = create_engine("sqlite:///:memory:")
         Base.metadata.create_all(engine)
         db = sessionmaker(bind=engine)()
@@ -459,7 +695,7 @@ class ScenarioServiceTest(unittest.TestCase):
                     "law": {
                         "title": "Право и безопасность",
                         "college_specialties": [
-                            {"college": f"Юридический колледж {idx}", "specialty": "Юриспруденция", "professions": ["Юрист"]}
+                            {"college": f"Юридический колледж {idx}", "specialty": f"Юриспруденция {idx}", "professions": ["Юрист"]}
                             for idx in range(1, 7)
                         ],
                     }
@@ -477,9 +713,11 @@ class ScenarioServiceTest(unittest.TestCase):
         first = service.show_industry_specialties(db, session, {}, "", "law")
         second = service.ask(db, "law_more", "", session_id=session.session_id, action="show_more_specialties")
 
-        self.assertIn("Юридический колледж 1", first.answer)
+        self.assertIn("Юриспруденция 1", first.answer)
+        self.assertNotIn("Юридический колледж 1", first.answer)
         self.assertIn("Показать ещё специальности", first.suggestions)
-        self.assertIn("Юридический колледж 4", second["answer"])
+        self.assertIn("Юриспруденция 4", second["answer"])
+        self.assertNotIn("Юридический колледж 4", second["answer"])
         self.assertNotIn("Сначала нужно найти профессию", second["answer"])
 
     def test_it_industry_filters_hospitality_on_more_pages(self) -> None:
@@ -560,7 +798,7 @@ class ScenarioServiceTest(unittest.TestCase):
         db = sessionmaker(bind=engine)()
 
         service = ScenarioService(chat_service=FakeChatService())
-        first = service.ask(db, "u3", "Абитуриент / поступающий")
+        first = service.ask(db, "u3", "Хочу поступить")
         result = service.ask(
             db,
             "u3",
@@ -580,9 +818,14 @@ class ScenarioServiceTest(unittest.TestCase):
             "svo_priority",
         )
 
-        self.assertIn("По одному сообщению нельзя точно подтвердить", answer)
+        self.assertIn("участники СВО", answer)
+        self.assertIn("вдовы и вдовцы", answer)
+        self.assertIn("свидетельство о рождении", answer)
+        self.assertIn("справки об участии в СВО", answer)
         self.assertIn("приёмной комиссии", answer)
         self.assertIn("Можно ещё посмотреть", answer)
+        self.assertNotIn("Кратко:", answer)
+        self.assertNotIn("Важно:", answer)
         self.assertNotIn("право точно положено", answer)
 
 

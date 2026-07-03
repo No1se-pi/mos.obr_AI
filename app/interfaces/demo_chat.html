@@ -143,10 +143,9 @@
 <body>
   <main class="layout">
     <section class="workspace">
-      <h1>AI-помощник по колледжам Москвы</h1>
-      <p>Откройте виджет в правом нижнем углу и пройдите сценарий: сначала выбор роли, затем один из четырёх маршрутов.</p>
+      <h1>AI - Амбассадор профессий Амби</h1>
+      <p>Откройте виджет в правом нижнем углу и пройдите сценарий: сразу выберите один из четырёх маршрутов.</p>
       <ul class="checks">
-        <li><span class="mark"></span><span>Родитель / абитуриент</span></li>
         <li><span class="mark"></span><span>Выбор колледжа</span></li>
         <li><span class="mark"></span><span>Выбор профессии</span></li>
         <li><span class="mark"></span><span>Поступление и свой вопрос</span></li>
@@ -163,7 +162,7 @@
 &lt;script&gt;
   MosobrWidget.init({
     apiUrl: "http://localhost:8000/api/chat",
-    title: "AI-помощник по колледжам"
+    title: "AI - Амбассадор профессий Амби"
   });
 &lt;/script&gt;</pre>
       <div class="status" id="copyStatus">Готово для вставки в HTML страницы.</div>
@@ -174,7 +173,7 @@
   <script>
     const widget = MosobrWidget.init({
       apiUrl: window.location.origin + "/api/chat",
-      title: "AI-помощник по колледжам"
+      title: "AI - Амбассадор профессий Амби"
     });
     widget.open();
 

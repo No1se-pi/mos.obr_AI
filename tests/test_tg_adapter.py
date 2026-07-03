@@ -31,6 +31,8 @@ class TelegramAdapterTest(unittest.TestCase):
 
     def test_telegram_button_icons_are_varied(self) -> None:
         labels = {
+            "Хочу поступить": "🎓",
+            "Хочу узнать информацию": "ℹ️",
             "Как подать заявление": "📨",
             "Какие документы нужны": "📄",
             "Сроки поступления": "📅",
@@ -40,8 +42,9 @@ class TelegramAdapterTest(unittest.TestCase):
             "Поступление иностранцев": "🌍",
             "Правила приёма 2026/27": "📜",
             "Промышленность": "🏭",
-            "IT и цифровые технологии": "💻",
-            "Дизайн и творчество": "🎨",
+            "ИТ": "💻",
+            "Креативные индустрии": "🎨",
+            "Образование и социальная сфера": "🎒",
             "Главное меню": "🏠",
         }
 
@@ -52,9 +55,10 @@ class TelegramAdapterTest(unittest.TestCase):
     def test_known_long_button_labels_are_compact(self) -> None:
         self.assertEqual(telegram_button_label("Как подать заявление"), "📨 Заявление")
         self.assertEqual(telegram_button_label("Какие документы нужны"), "📄 Документы")
-        self.assertEqual(telegram_button_label("Вступительные испытания"), "🧪 Испытания")
+        self.assertEqual(telegram_button_label("Вступительные испытания"), "🧪 Вступительные испытания")
         self.assertEqual(telegram_button_label("Правила приёма в 2026 году"), "📜 Правила 2026")
-        self.assertEqual(telegram_button_label("Приёмная кампания 2026/27"), "🧭 ПК 2026/27")
+        self.assertEqual(telegram_button_label("Приёмная кампания 2026/27"), "🧭 Поступление в колледж")
+        self.assertEqual(telegram_button_label("Поступление в колледж"), "🧭 Поступление в колледж")
         self.assertEqual(telegram_button_label("Правила приёма 2026/27"), "📜 Правила 2026/27")
         self.assertEqual(telegram_button_label("Льготы при поступлении"), "🎖️ Льготы")
         self.assertEqual(telegram_button_label("Поступление иностранцев"), "🌍 Иностранцы")
@@ -65,7 +69,7 @@ class TelegramAdapterTest(unittest.TestCase):
                 "Как подать заявление",
                 "Какие документы нужны",
                 "Вступительные испытания",
-                "Правила приёма 2026/27",
+                "Поступление в колледж",
             ],
             include_end=False,
         )
@@ -87,6 +91,13 @@ class TelegramAdapterTest(unittest.TestCase):
             len(wide_button.callback_data.encode("utf-8")),
             TELEGRAM_CALLBACK_DATA_LIMIT,
         )
+
+    def test_start_text_uses_new_ambi_intro(self) -> None:
+        text = self.adapter.start_text_html()
+
+        self.assertIn("Привет! Я - Амби", text)
+        self.assertIn("AI-амбассадор колледжей Москвы", text)
+        self.assertIn("Давай выберем, с чего начать.", text)
 
 
 if __name__ == "__main__":

@@ -15,8 +15,11 @@ from app.services.session_service import SessionService
 logger = get_logger(__name__)
 
 
-PARENT_LABEL = "Родитель"
-APPLICANT_LABEL = "Абитуриент / поступающий"
+ADMISSION_ATLAS_URL = "https://school.mos.ru/mcrpo/portal/admission/"
+PARENT_LABEL = "Хочу узнать информацию"
+APPLICANT_LABEL = "Хочу поступить"
+LEGACY_PARENT_LABELS = ("Родитель",)
+LEGACY_APPLICANT_LABELS = ("Абитуриент / поступающий", "Абитуриент", "Поступающий", "Хочу потупить")
 
 MAIN_MENU = [
     "Выбрать колледж",
@@ -25,10 +28,23 @@ MAIN_MENU = [
     "Свой вопрос",
 ]
 
-USER_TYPE_BUTTONS = [PARENT_LABEL, APPLICANT_LABEL]
+USER_TYPE_BUTTONS = [APPLICANT_LABEL, PARENT_LABEL]
 BACK_BUTTON = "Назад"
 MAIN_MENU_BUTTON = "Главное меню"
 END_SESSION_BUTTON = "Завершить сессию"
+AI_NOTICE_BLOCK = "Примечание: ответ сформирован ИИ и может содержать неточности. Важные сроки, условия и контакты лучше сверять на официальных ресурсах."
+SUPPORT_CONTACTS_BLOCK = (
+    f"{AI_NOTICE_BLOCK}\n\n"
+    "Если остались вопросы:\n"
+    "+7 (495) 568-00-88\n"
+    "https://колледжмосква.рф/#forma\n"
+    "spo@edu.mos.ru"
+)
+GREETING_TEXT = (
+    "Привет! Я - Амби, AI-амбассадор колледжей Москвы, помогаю выбрать профессию "
+    "и ознакомиться с поступлением в колледжи Москвы.\n"
+    "Давай выберем, с чего начать."
+)
 COLLEGE_START_BUTTONS = [
     "Найти конкретный колледж",
     "Помочь выбрать колледж",
@@ -56,7 +72,7 @@ PROFESSION_START_BUTTONS = [
     MAIN_MENU_BUTTON,
 ]
 ADMISSION_TOPICS: list[tuple[str, str, str]] = [
-    ("campaign_2026_2027", "Приёмная кампания 2026/27", "приёмная кампания 2026 2027 поступление колледжи Москвы"),
+    ("campaign_2026_2027", "Поступление в колледж", "приёмная кампания 2026 2027 поступление колледжи Москвы"),
     ("application", "Как подать заявление", "как подать заявление на поступление в колледж Москвы через mos.ru"),
     ("documents", "Какие документы нужны", "какие документы нужны для поступления в колледж Москвы"),
     ("deadlines", "Сроки поступления", "сроки поступления в колледж Москвы в 2026 2027 году"),
@@ -69,7 +85,7 @@ ADMISSION_TOPICS: list[tuple[str, str, str]] = [
     ("rules_2026", "Правила приёма 2026/27", "правила приёма в колледжи Москвы в 2026 2027 году документы сроки заявление"),
     ("svo_priority", "СВО и первоочередное право", "первоочередное право зачисления СВО дети участников СВО льготы поступление"),
 ]
-HIDDEN_ADMISSION_TOPIC_SLUGS = {"svo_priority"}
+HIDDEN_ADMISSION_TOPIC_SLUGS = {"svo_priority", "army"}
 ADMISSION_TOPIC_BUTTONS = [label for slug, label, _ in ADMISSION_TOPICS if slug not in HIDDEN_ADMISSION_TOPIC_SLUGS] + [
     "Другой вопрос про поступление",
     MAIN_MENU_BUTTON,
@@ -122,9 +138,9 @@ ADMISSION_RELATED_TOPICS: dict[str, list[str]] = {
         "Сроки поступления",
     ],
     "army": [
-        "Отсрочка от армии",
-        "Поступление после колледжа",
-        "Документы для поступления",
+        "Поступление в колледж",
+        "Какие документы нужны",
+        "Сроки поступления",
     ],
     "exams": [
         "Как подать заявление",
@@ -135,19 +151,32 @@ ADMISSION_RELATED_TOPICS: dict[str, list[str]] = {
 }
 
 INDUSTRY_BUTTONS: list[tuple[str, str]] = [
+    ("Безопасность и право", "law"),
+    ("Гостепреимство", "tourism"),
+    ("здравоохранение", "medicine"),
+    ("ИТ", "it"),
+    ("Образование и социальная сфера", "education"),
+    ("Креативные индустрии", "creative"),
+    ("Транспорт", "transport"),
+    ("Промышленность", "production"),
+    ("Строительство", "construction"),
+    ("Финансы и торговля", "finance"),
+]
+INDUSTRY_TITLES_BY_KEY = {key: label for label, key in INDUSTRY_BUTTONS}
+LEGACY_INDUSTRY_LABELS: tuple[tuple[str, str], ...] = (
     ("IT и цифровые технологии", "it"),
-    ("Дизайн и творчество", "design"),
+    ("Дизайн и творчество", "creative"),
     ("Педагогика и работа с детьми", "education"),
     ("Медицина и социальная помощь", "medicine"),
     ("Право и безопасность", "law"),
     ("Финансы и экономика", "finance"),
     ("Туризм и сервис", "tourism"),
-    ("Промышленность", "production"),
+    ("Гостеприимство", "tourism"),
     ("Строительство и архитектура", "construction"),
     ("Транспорт и логистика", "transport"),
-    ("Медиа и коммуникации", "media"),
+    ("Медиа и коммуникации", "creative"),
     ("Другое", "other"),
-]
+)
 
 INTEREST_KEYWORDS: list[tuple[str, tuple[str, ...], str]] = [
     ("education", ("дет", "ребен", "ребён", "работа с детьми", "люблю детей", "объясн", "учить", "учител", "помогать учиться", "школ", "детский сад", "воспитател", "педагог", "наставник", "кружк", "занятия с детьми", "развитие детей", "дошколь", "младшие классы", "начальные классы", "вожат"), "интерес к обучению, объяснению и работе с детьми"),
@@ -270,6 +299,146 @@ CONSTRUCTION_EXCLUDE_WITHOUT_CONTEXT = (
 )
 
 INDUSTRY_PAGE_ITEM_LIMIT = 60
+COLLEGE_SPECIALTIES_PAGE_SIZE = 4
+
+COLLEGE_PROFILE_MARKERS: dict[str, tuple[str, ...]] = {
+    "it": (
+        "администрирование",
+        "базы данных",
+        "веб",
+        "информацион",
+        "искусственный интеллект",
+        "компьютер",
+        "программ",
+        "разработ",
+        "сетев",
+        "систем",
+        "цифров",
+    ),
+    "creative": (
+        "анимац",
+        "дизайн",
+        "звук",
+        "иллюст",
+        "кино",
+        "креатив",
+        "медиа",
+        "реклама",
+        "фото",
+        "худож",
+    ),
+    "education": (
+        "воспитател",
+        "дет",
+        "дошколь",
+        "образован",
+        "педагог",
+        "преподав",
+        "социальная работа",
+        "учител",
+    ),
+    "medicine": (
+        "акушер",
+        "здравоохран",
+        "лабораторная диагностика",
+        "массаж",
+        "медицин",
+        "оптика",
+        "сестрин",
+        "стоматолог",
+        "фарма",
+        "фельдшер",
+    ),
+    "law": (
+        "безопас",
+        "защит",
+        "право",
+        "правоохран",
+        "полици",
+        "юрид",
+        "юриспруден",
+    ),
+    "tourism": (
+        "гостеприим",
+        "отел",
+        "ресторан",
+        "сервис",
+        "туризм",
+        "флорист",
+    ),
+    "transport": (
+        "железнодорож",
+        "логист",
+        "машинист",
+        "метрополит",
+        "перевоз",
+        "транспорт",
+        "электропоезд",
+    ),
+    "production": (
+        "автоматизац",
+        "аддитив",
+        "бпла",
+        "машиностро",
+        "мехатрон",
+        "наладчик",
+        "полимер",
+        "производ",
+        "робот",
+        "станк",
+        "свар",
+        "технологического оборудования",
+    ),
+    "construction": (
+        "архитект",
+        "bim",
+        "водоснабжен",
+        "землеустрой",
+        "реставрац",
+        "строитель",
+        "электромонтаж",
+    ),
+    "finance": (
+        "банк",
+        "бухгалтер",
+        "казнач",
+        "торгов",
+        "финанс",
+        "эконом",
+    ),
+}
+
+COLLEGE_PROFILE_KEY_ALIASES = {
+    "design": "creative",
+    "media": "creative",
+    "music": "creative",
+}
+
+COLLEGE_PROFILE_LABELS: dict[str, str] = {
+    "it": "ИТ и цифровые технологии",
+    "creative": "Креативные индустрии",
+    "education": "Образование и социальная сфера",
+    "medicine": "Здравоохранение",
+    "law": "Безопасность и право",
+    "tourism": "Гостеприимство и сервис",
+    "transport": "Транспорт и логистика",
+    "production": "Промышленность и производство",
+    "construction": "Строительство и инженерия",
+    "finance": "Финансы и торговля",
+}
+
+COLLEGE_PROFILE_AUDIENCES: dict[str, str] = {
+    "it": "ИТ- и цифровые направления",
+    "creative": "творческие и медийные направления",
+    "education": "образовательные и социальные направления",
+    "medicine": "медицинские направления",
+    "law": "направления в праве и безопасности",
+    "tourism": "направления в гостеприимстве, сервисе и туризме",
+    "transport": "транспортные и логистические направления",
+    "production": "производственные и технические направления",
+    "construction": "строительные и инженерные направления",
+    "finance": "финансовые и торговые направления",
+}
 
 STRICT_INDUSTRY_INCLUDE_MARKERS: dict[str, tuple[str, ...]] = {
     "it": (
@@ -368,12 +537,34 @@ def normalize_label(text: str | None) -> str:
     return text
 
 
+def user_type_key_for_label(label: str | None) -> str | None:
+    normalized = normalize_label(label)
+    if normalized in {normalize_label(PARENT_LABEL), *(normalize_label(value) for value in LEGACY_PARENT_LABELS)}:
+        return "parent"
+    if normalized in {normalize_label(APPLICANT_LABEL), *(normalize_label(value) for value in LEGACY_APPLICANT_LABELS)}:
+        return "applicant"
+    return None
+
+
+def industry_key_for_label(label: str | None) -> str | None:
+    normalized = normalize_label(label)
+    for industry_label, key in INDUSTRY_BUTTONS:
+        if normalized == normalize_label(industry_label):
+            return key
+    for industry_label, key in LEGACY_INDUSTRY_LABELS:
+        if normalized == normalize_label(industry_label):
+            return key
+    return None
+
+
 ADMISSION_LABEL_TO_SLUG = {normalize_label(label): slug for slug, label, _ in ADMISSION_TOPICS}
 ADMISSION_LABEL_TO_SLUG.update(
     {
         normalize_label("Правила приёма в 2026 году"): "rules_2026",
         normalize_label("Правила приёма в 2026/27 году"): "rules_2026",
+        normalize_label("Приёмная кампания 2026/27"): "campaign_2026_2027",
         normalize_label("Приёмная кампания 2026-2027"): "campaign_2026_2027",
+        normalize_label("ПК 2026/27"): "campaign_2026_2027",
         normalize_label("Льготы"): "benefits",
         normalize_label("Иностранные граждане"): "foreigners",
     }
@@ -388,21 +579,26 @@ def action_for_label(label: str, *, route: str | None = None, step: str | None =
     if numbered:
         return f"pick:{numbered.group(1)}"
 
+    specialty_button = re.match(r"^специальность\s+(\d+)$", normalized)
+    if specialty_button:
+        return f"pick:{specialty_button.group(1)}"
+
     match = re.search(r"(?:подробнее про|выбрать)\s+(\d+)\s+(?:вариант|специальность|направление)", normalized)
     if match:
         return f"pick:{match.group(1)}"
 
-    if normalized == normalize_label(PARENT_LABEL):
+    user_type_key = user_type_key_for_label(label)
+    if user_type_key == "parent":
         return "set_user_type_parent"
-    if normalized == normalize_label(APPLICANT_LABEL):
+    if user_type_key == "applicant":
         return "set_user_type_applicant"
 
     if normalized in ADMISSION_LABEL_TO_SLUG:
         return f"admission_topic:{ADMISSION_LABEL_TO_SLUG[normalized]}"
 
-    for industry_label, key in INDUSTRY_BUTTONS:
-        if normalized == normalize_label(industry_label):
-            return f"industry:{key}"
+    industry_key = industry_key_for_label(label)
+    if industry_key:
+        return f"industry:{industry_key}"
 
     label_actions = {
         "главное меню": "main_menu",
@@ -524,20 +720,28 @@ class ScenarioService:
                 ).as_dict()
 
         if not state.get("user_type"):
-            self.session_service.update_route_state(
+            state = self.session_service.update_route_state(
                 db,
                 session,
-                {"current_route": "user_type", "route_step": "choose_user_type"},
+                {
+                    "user_type": "applicant",
+                    "tone_mode": "applicant",
+                },
             )
-            answer = self.user_type_prompt()
-            return self.save_direct(
-                db,
-                session,
-                message,
-                answer,
-                "user_type",
-                USER_TYPE_BUTTONS,
-            ).as_dict()
+            if not message and not action and not route:
+                state = self.session_service.update_route_state(
+                    db,
+                    session,
+                    {"current_route": "main_menu", "route_step": "main_menu"},
+                )
+                return self.save_direct(
+                    db,
+                    session,
+                    message,
+                    self.main_menu_text(state, first_time=True),
+                    "main_menu",
+                    MAIN_MENU,
+                ).as_dict()
 
         if action_code == "main_menu":
             state = self.session_service.update_route_state(
@@ -559,6 +763,14 @@ class ScenarioService:
 
         if action_code == "back":
             return self.handle_back(db, session, state, message).as_dict()
+
+        last_results = state.get("last_results") if isinstance(state.get("last_results"), dict) else {}
+        if (
+            state.get("current_route") == "college"
+            and action_code == "profession_more_specialties"
+            and last_results.get("kind") == "college_specialties"
+        ):
+            return self.handle_college(db, session, state, message, action_code).as_dict()
 
         if action_code.startswith("college_") or route == "college":
             return self.handle_college(db, session, state, message, action_code).as_dict()
@@ -600,9 +812,9 @@ class ScenarioService:
         label = normalize_label(message)
 
         if raw_action == "select_industry":
-            for industry_label, key in INDUSTRY_BUTTONS:
-                if label == normalize_label(industry_label):
-                    return f"industry:{key}"
+            industry_key = industry_key_for_label(message)
+            if industry_key:
+                return f"industry:{industry_key}"
 
         explicit_actions = {
             "set_user_type_parent": "set_parent",
@@ -639,6 +851,12 @@ class ScenarioService:
         }
         if raw in explicit_actions:
             return explicit_actions[raw]
+
+        user_type_key = user_type_key_for_label(message)
+        if user_type_key == "parent":
+            return "set_parent"
+        if user_type_key == "applicant":
+            return "set_applicant"
 
         if route and not action and not message.strip():
             route_map = {
@@ -694,13 +912,17 @@ class ScenarioService:
         if label in ADMISSION_LABEL_TO_SLUG:
             return f"admission_topic:{ADMISSION_LABEL_TO_SLUG[label]}"
 
-        for industry_label, key in INDUSTRY_BUTTONS:
-            if label == normalize_label(industry_label):
-                return f"industry:{key}"
+        industry_key = industry_key_for_label(message)
+        if industry_key:
+            return f"industry:{industry_key}"
 
         numbered = re.match(r"^(\d+)\.\s*(?:подробнее|выбрать|вариант)", label)
         if numbered:
             return f"pick:{numbered.group(1)}"
+
+        specialty_button = re.match(r"^специальность\s+(\d+)$", label)
+        if specialty_button:
+            return f"pick:{specialty_button.group(1)}"
 
         match = re.search(r"(?:подробнее про|выбрать)\s+(\d+)\s+(?:вариант|специальность|направление)", label)
         if match:
@@ -710,45 +932,29 @@ class ScenarioService:
 
     def normalize_user_type(self, value: str | None) -> str | None:
         normalized = normalize_label(value)
-        if normalized in {"parent", "родитель"}:
+        if normalized == "parent":
             return "parent"
-        if normalized in {"applicant", "абитуриент", "поступающий", "абитуриент поступающий"}:
+        if normalized == "applicant":
             return "applicant"
-        return None
+        return user_type_key_for_label(value)
 
     def user_type_from_message(self, message: str) -> str | None:
-        normalized = normalize_label(message)
-        if normalized == normalize_label(PARENT_LABEL):
-            return "parent"
-        if normalized == normalize_label(APPLICANT_LABEL):
-            return "applicant"
-        return None
+        return user_type_key_for_label(message)
 
     def user_type_label(self, user_type: str) -> str:
         return PARENT_LABEL if user_type == "parent" else APPLICANT_LABEL
 
     def user_type_prompt(self) -> str:
-        return (
-            "Я помогу с колледжами Москвы, специальностями, профессиями и поступлением.\n\n"
-            "Кто вы?"
-        )
+        return GREETING_TEXT
 
     def main_menu_text(self, state: dict[str, Any], *, first_time: bool = False) -> str:
         if state.get("user_type") == "parent":
             if first_time:
-                return (
-                    "Здравствуйте!\n\n"
-                    "Я помогу сориентироваться в колледжах Москвы, специальностях и вопросах поступления.\n"
-                    "Выберите, с чего удобнее начать."
-                )
+                return "Давайте выберем, с чего начать."
             prefix = "Главное меню. Выберите, с чего удобнее продолжить."
         else:
             if first_time:
-                return (
-                    "Привет!\n\n"
-                    "Давай помогу тебе выбрать следующую ступень своего будущего.\n"
-                    "Для начала давай определимся, что мы с тобой обсудим."
-                )
+                return "Давай выберем, с чего начать."
             prefix = "Главное меню. Что хочешь сделать дальше?"
         return (
             f"{prefix}\n\n"
@@ -792,6 +998,7 @@ class ScenarioService:
     ) -> ScenarioAnswer:
         state = self.session_service.get_route_state(session)
         answer = self.prepare_answer(answer, state)
+        answer = self.append_support_contacts(answer, state)
         self.session_service.update_route_state(db, session, {"last_answer": answer})
         if user_message:
             self.session_service.add_message(db=db, session=session, role="user", content=user_message)
@@ -813,6 +1020,27 @@ class ScenarioService:
         if state.get("tone_mode") == "parent":
             answer = self.apply_parent_tone(answer)
         return answer
+
+    def append_support_contacts(self, answer: str, state: dict[str, Any]) -> str:
+        if not self.should_append_support_contacts(answer, state):
+            return answer
+        return f"{answer.rstrip()}\n\n{SUPPORT_CONTACTS_BLOCK}"
+
+    def should_append_support_contacts(self, answer: str, state: dict[str, Any]) -> bool:
+        if not answer.strip():
+            return False
+        if any(marker in answer for marker in ("+7 (495) 568-00-88", "spo@edu.mos.ru", "колледжмосква.рф/#forma")):
+            return False
+
+        route = state.get("current_route")
+        step = str(state.get("route_step") or "")
+        if route in {None, "user_type", "main_menu"}:
+            return False
+        if step.startswith("awaiting_"):
+            return False
+        if step in {"choose_user_type", "main_menu", "college_start", "college_choose_start", "choose_industry", "profession_start"}:
+            return False
+        return True
 
     def apply_parent_tone(self, text: str) -> str:
         replacements = [
@@ -892,6 +1120,9 @@ class ScenarioService:
 
         if action_code == "college_specialties":
             return self.college_specialties(db, session, state, message)
+
+        if action_code == "profession_more_specialties":
+            return self.render_more_college_specialties(db, session, state, message)
 
         if action_code == "college_admission":
             return self.admission_start(db, session, state, message)
@@ -994,17 +1225,39 @@ class ScenarioService:
         card = self.chat_service.get_college_card_for_name(db, college)
         display_name = self.chat_service.extract_college_name(card) if card else college
         brief = self.brief_from_doc(card) if card else ""
+        metadata = card.metadata_json if card and isinstance(card.metadata_json, dict) else {}
+        specialties = [str(value).strip() for value in (metadata.get("specialties") or []) if str(value).strip()]
+        addresses = [str(value).strip() for value in (metadata.get("addresses") or []) if str(value).strip()]
+        website = str(metadata.get("website") or metadata.get("site") or metadata.get("atlas_url") or "").strip()
+        fit_summary = self.college_fit_summary(display_name, metadata, specialties, brief)
 
-        lines = [display_name, ""]
-        if brief:
-            lines.extend(["Кратко:", brief, ""])
+        lines = ["Колледж:", display_name, ""]
+        if fit_summary:
+            lines.extend(["Кому подойдёт:", fit_summary, ""])
+        if brief and brief != display_name:
+            lines.extend(["Описание:", brief, ""])
+        if specialties:
+            lines.extend(
+                [
+                    "Специальности:",
+                    f"В базе: {len(specialties)}. Полный список можно открыть кнопкой «Все специальности».",
+                    "",
+                ]
+            )
+        if addresses or website:
+            lines.append("Основное:")
+            if addresses:
+                lines.append(f"Адресов: {len(addresses)}")
+            if website:
+                lines.append(f"Сайт: {website}")
+            lines.append("")
         lines.extend(
             [
-                "Что можно посмотреть:",
-                "- контакты и адреса",
-                "- все специальности",
-                "- порядок поступления",
-                "- задать вопрос про этот колледж",
+                "Что можно посмотреть дальше:",
+                "1. Контакты и адреса",
+                "2. Все специальности",
+                "3. Порядок поступления",
+                "4. Задать вопрос про этот колледж",
             ]
         )
         return "\n".join(lines).strip()
@@ -1013,10 +1266,129 @@ class ScenarioService:
         if not doc or not doc.content:
             return ""
         text = re.sub(r"\s+", " ", doc.content).strip()
+        text = re.sub(
+            r"\bАлиасы:\s*.*?(?=\b(?:Название|Сайт|Адреса|Контакты|Телефон|Email|E-mail|Специальности|Описание):|$)",
+            "",
+            text,
+            flags=re.IGNORECASE,
+        )
+        text = re.sub(r"\b(?:Название|Колледж):\s*", "", text, flags=re.IGNORECASE)
         text = re.sub(r"https?://\S+", "", text).strip()
+        text = re.sub(r"\s+", " ", text).strip(" .")
         sentences = re.split(r"(?<=[.!?])\s+", text)
         brief = " ".join(sentence for sentence in sentences[:2] if sentence)
+        if any(marker in brief for marker in ("Специальности:", "Адреса:", "Контакты:", "Сайт:")):
+            return ""
         return brief[:360].strip()
+
+    def college_fit_summary(
+        self,
+        display_name: str,
+        metadata: dict[str, Any],
+        specialties: list[str],
+        brief: str,
+    ) -> str:
+        profiles = self.college_top_profiles(display_name, metadata, specialties, brief)
+        if not profiles:
+            return (
+                "Подойдёт тем, кто хочет выбрать прикладную профессию и заранее понимать, "
+                "где можно работать после обучения. Лучше открыть полный список специальностей и сверить его с интересами."
+            )
+
+        audiences = [COLLEGE_PROFILE_AUDIENCES[key] for key in profiles if key in COLLEGE_PROFILE_AUDIENCES]
+        labels = [COLLEGE_PROFILE_LABELS[key] for key in profiles if key in COLLEGE_PROFILE_LABELS]
+        examples = self.college_profile_examples(profiles, specialties)
+
+        if len(profiles) == 1:
+            first = f"По специальностям сильнее всего виден профиль «{labels[0]}». Колледж стоит смотреть, если интересны {audiences[0]}."
+        else:
+            first = (
+                f"По специальностям виден смешанный профиль: {self.format_russian_list(labels)}. "
+                f"Колледж стоит смотреть, если интересны {self.format_russian_list(audiences)}."
+            )
+        if examples:
+            return f"{first} Например: {', '.join(examples)}."
+        return first
+
+    def college_top_profiles(
+        self,
+        display_name: str,
+        metadata: dict[str, Any],
+        specialties: list[str],
+        brief: str,
+        *,
+        limit: int = 3,
+    ) -> list[str]:
+        scores = self.college_profile_scores(display_name, metadata, specialties, brief)
+        if not scores:
+            return []
+        sorted_scores = sorted(scores.items(), key=lambda item: (-item[1], item[0]))
+        best_score = sorted_scores[0][1]
+        threshold = max(1.0, best_score * 0.45)
+        result = [key for key, score in sorted_scores if score >= threshold and key in COLLEGE_PROFILE_LABELS]
+        return result[:limit]
+
+    def college_profile_scores(
+        self,
+        display_name: str,
+        metadata: dict[str, Any],
+        specialties: list[str],
+        brief: str,
+    ) -> dict[str, float]:
+        scores: dict[str, float] = {}
+        raw_profile_scores = metadata.get("college_profile_scores") or {}
+        if isinstance(raw_profile_scores, dict):
+            for raw_key, raw_score in raw_profile_scores.items():
+                key = COLLEGE_PROFILE_KEY_ALIASES.get(str(raw_key), str(raw_key))
+                if key not in COLLEGE_PROFILE_LABELS:
+                    continue
+                try:
+                    score = float(raw_score)
+                except (TypeError, ValueError):
+                    score = 0.0
+                scores[key] = scores.get(key, 0.0) + score
+
+        raw_tags = metadata.get("domain_tags") or []
+        if isinstance(raw_tags, list):
+            for raw_tag in raw_tags:
+                key = COLLEGE_PROFILE_KEY_ALIASES.get(str(raw_tag), str(raw_tag))
+                if key in COLLEGE_PROFILE_LABELS:
+                    scores[key] = scores.get(key, 0.0) + 0.5
+
+        haystack = normalize_label(" ".join([display_name, brief, *specialties]))
+        for key, markers in COLLEGE_PROFILE_MARKERS.items():
+            marker_score = sum(1 for marker in markers if marker in haystack)
+            if marker_score:
+                scores[key] = scores.get(key, 0.0) + marker_score
+
+        return scores
+
+    def college_profile_examples(self, profiles: list[str], specialties: list[str], *, limit: int = 3) -> list[str]:
+        examples: list[str] = []
+        for profile in profiles:
+            markers = COLLEGE_PROFILE_MARKERS.get(profile, ())
+            for specialty in specialties:
+                normalized = normalize_label(specialty)
+                if not normalized or specialty in examples:
+                    continue
+                if any(marker in normalized for marker in markers):
+                    examples.append(specialty)
+                    break
+            if len(examples) >= limit:
+                break
+        if not examples:
+            examples = specialties[:limit]
+        return examples[:limit]
+
+    def format_russian_list(self, items: list[str]) -> str:
+        clean_items = [item for item in items if item]
+        if not clean_items:
+            return ""
+        if len(clean_items) == 1:
+            return clean_items[0]
+        if len(clean_items) == 2:
+            return f"{clean_items[0]} и {clean_items[1]}"
+        return f"{', '.join(clean_items[:-1])} и {clean_items[-1]}"
 
     def college_contacts(self, db: Session, session, state: dict[str, Any], message: str) -> ScenarioAnswer:
         college = state.get("last_college")
@@ -1044,9 +1416,104 @@ class ScenarioService:
                 "college",
                 ["Новый поиск", "Главное меню"],
             )
-        answer = self.chat_service.render_all_specialties_for_college(db, str(college))
-        self.session_service.update_route_state(db, session, {"current_route": "college", "route_step": "college_specialties"})
-        return self.save_direct(db, session, message, answer, "college", COLLEGE_FOUND_BUTTONS)
+        items = self.college_specialty_items(db, str(college))
+        card = self.chat_service.get_college_card_for_name(db, str(college))
+        display_name = self.chat_service.extract_college_name(card) if card else str(college)
+        if not items:
+            self.session_service.update_route_state(db, session, {"current_route": "college", "route_step": "college_specialties"})
+            answer = (
+                f"Пока не вижу списка специальностей колледжа «{display_name}» в своей базе.\n\n"
+                f"Актуальный список можно сверить в Атласе профессий: {ATLAS_URL}"
+            )
+            return self.save_direct(db, session, message, answer, "college", COLLEGE_FOUND_BUTTONS)
+
+        self.session_service.update_route_state(
+            db,
+            session,
+            {
+                "current_route": "college",
+                "route_step": "college_specialties",
+                "last_college": str(college),
+                "last_results": {
+                    "kind": "college_specialties",
+                    "query": display_name,
+                    "items": items,
+                    "offset": 0,
+                },
+            },
+        )
+        return self.render_college_specialties_page(
+            db,
+            session,
+            message,
+            f"Специальности колледжа «{display_name}»:",
+        )
+
+    def college_specialty_items(self, db: Session, college: str) -> list[dict[str, Any]]:
+        docs = self.chat_service.get_all_specialty_docs_for_college(db, college)
+        items: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for doc in docs:
+            item = self.entry_from_doc(doc)
+            specialty = str(item.get("specialty") or "").strip()
+            normalized = normalize_label(specialty)
+            if not specialty or normalized in seen:
+                continue
+            seen.add(normalized)
+            items.append(item)
+        return items
+
+    def render_more_college_specialties(self, db: Session, session, state: dict[str, Any], message: str) -> ScenarioAnswer:
+        last_results = state.get("last_results") if isinstance(state.get("last_results"), dict) else {}
+        if last_results.get("kind") != "college_specialties":
+            return self.save_direct(
+                db,
+                session,
+                message,
+                "Сначала нужно открыть список специальностей конкретного колледжа.",
+                "college",
+                ["Все специальности", MAIN_MENU_BUTTON],
+            )
+        return self.render_college_specialties_page(db, session, message, "Показываю ещё специальности этого колледжа:")
+
+    def render_college_specialties_page(self, db: Session, session, user_message: str, title: str) -> ScenarioAnswer:
+        state = self.session_service.get_route_state(session)
+        last_results = state.get("last_results") if isinstance(state.get("last_results"), dict) else {}
+        items = last_results.get("items", [])
+        offset = int(last_results.get("offset") or 0)
+        page = [item for item in items[offset : offset + COLLEGE_SPECIALTIES_PAGE_SIZE] if isinstance(item, dict)]
+        if not page:
+            return self.save_direct(
+                db,
+                session,
+                user_message,
+                "Больше специальностей по этому колледжу в моей базе не нашёл.",
+                "college",
+                ["Контакты и адреса", "Порядок поступления", "Задать вопрос про этот колледж", MAIN_MENU_BUTTON],
+            )
+
+        total = len([item for item in items if isinstance(item, dict)])
+        lines = [title, f"Показываю {offset + 1}-{offset + len(page)} из {total}."]
+        for idx, item in enumerate(page, start=offset + 1):
+            lines.append("")
+            lines.append(f"{idx}. {item.get('specialty', '')}")
+            professions = item.get("professions") or []
+            if professions:
+                lines.append(f"   После обучения: {', '.join(str(p) for p in professions[:3])}")
+            specialty_url = str(item.get("specialty_url") or "").strip()
+            if specialty_url:
+                lines.append(f"   Подробнее: {specialty_url}")
+
+        new_offset = offset + len(page)
+        last_results = dict(last_results)
+        last_results["offset"] = new_offset
+        self.session_service.update_route_state(db, session, {"last_results": last_results})
+
+        suggestions: list[str] = []
+        if new_offset < len(items):
+            suggestions.append("Показать ещё специальности")
+        suggestions.extend(["Контакты и адреса", "Порядок поступления", "Задать вопрос про этот колледж", "Новый поиск", MAIN_MENU_BUTTON])
+        return self.save_direct(db, session, user_message, "\n".join(lines), "college", suggestions)
 
     def show_colleges_for_query(
         self,
@@ -1389,19 +1856,30 @@ class ScenarioService:
     def industry_specialty_options(self, db: Session, key: str) -> tuple[str, list[dict[str, Any]]]:
         if key == "education":
             entries = self.education_specialty_entries(db)
-            title = "Педагогика и работа с детьми"
+            title = INDUSTRY_TITLES_BY_KEY.get(key, "Образование и социальная сфера")
         elif key == "jewelry":
             entries = self.jewelry_specialty_entries(db)
             title = "Ювелирное дело и декоративно-прикладное искусство"
         elif key == "production":
             entries = self.production_specialty_entries(db)
-            title = "Промышленность"
+            title = INDUSTRY_TITLES_BY_KEY.get(key, "Промышленность")
+        elif key == "creative":
+            industries = self.chat_service.get_reference_catalog().industry_data().get("industries", {})
+            entries = []
+            for source_key in ("design", "media"):
+                payload = industries.get(source_key, {})
+                entries.extend(
+                    self.entry_from_catalog(item)
+                    for item in payload.get("college_specialties", [])
+                    if isinstance(item, dict)
+                )
+            title = INDUSTRY_TITLES_BY_KEY.get(key, "Креативные индустрии")
         else:
             payload = self.chat_service.get_reference_catalog().industry_data().get("industries", {}).get(key, {})
-            title = str(payload.get("title") or key)
+            title = INDUSTRY_TITLES_BY_KEY.get(key, str(payload.get("title") or key))
             entries = [self.entry_from_catalog(item) for item in payload.get("college_specialties", []) if isinstance(item, dict)]
 
-        seen: set[tuple[str, str]] = set()
+        seen: set[str] = set()
         result: list[dict[str, Any]] = []
         for entry in entries:
             specialty = str(entry.get("specialty") or "").strip()
@@ -1413,10 +1891,9 @@ class ScenarioService:
             if key == "construction" and any(marker in norm for marker in CONSTRUCTION_EXCLUDE_WITHOUT_CONTEXT):
                 continue
             college = str(entry.get("college") or "").strip()
-            dedupe_key = (self.chat_service.college_key(college) if college else "", norm)
-            if dedupe_key in seen:
+            if norm in seen:
                 continue
-            seen.add(dedupe_key)
+            seen.add(norm)
             professions = entry.get("professions") or []
             result.append(
                 {
@@ -1694,20 +2171,26 @@ class ScenarioService:
 
     def has_svo_priority_query(self, text: str) -> bool:
         q = normalize_label(text)
-        return any(
+        direct_context = any(
             marker in q
             for marker in [
                 "сво",
-                "участник сво",
-                "дети участников",
+                "участник смо",
+                "участников смо",
+                "спецоперац",
                 "мобилиз",
-                "военнослуж",
                 "добровол",
                 "контрактник",
-                "вдова",
-                "вдовец",
+                "ветеран боевых",
+                "боевых действий",
+                "справк об участ",
             ]
-        ) and any(marker in q for marker in ["льгот", "преимуществ", "первоочеред", "поступ", "зачисл"])
+        )
+        family_context = any(marker in q for marker in ["вдова", "вдовец", "ребенок участника", "дети участников", "сын участника", "дочь участника"]) and any(
+            marker in q for marker in ["сво", "спецоперац", "мобилиз", "добровол", "контрактник", "боевых действий", "военнослуж"]
+        )
+        benefit_context = any(marker in q for marker in ["льгот", "преимуществ", "первоочеред", "поступ", "зачисл", "справк", "документ"])
+        return (direct_context or family_context) and benefit_context
 
     def has_olympiad_benefit_query(self, text: str) -> bool:
         q = normalize_label(text)
@@ -1785,7 +2268,7 @@ class ScenarioService:
         _ = state
         answers = {
             "campaign_2026_2027": (
-                "Приёмная кампания 2026/27 по колледжам Москвы устроена вокруг электронного заявления на mos.ru.\n\n"
+                "Поступление в колледжи Москвы устроено вокруг электронного заявления на mos.ru.\n\n"
                 "Что важно знать:\n"
                 "- заявление подают через услугу «Запись в колледж»;\n"
                 "- в заявлении можно выбрать несколько программ и расставить приоритеты: 1 — самый желанный вариант;\n"
@@ -1820,13 +2303,12 @@ class ScenarioService:
                 "Зачисление для московских выпускников 9 класса начинается с 27 июля 2026 года, для остальных категорий — с 16 августа 2026 года."
             ),
             "benefits": (
-                "При поступлении могут учитываться льготы, первоочередное или преимущественное право, а также индивидуальные достижения.\n\n"
-                "В общем виде это работает так:\n"
-                "- льгота или особое право не «угадывается» системой автоматически, его нужно подтвердить документами;\n"
-                "- категория должна подходить под действующие правила приёма;\n"
-                "- индивидуальные достижения могут учитываться только если они предусмотрены правилами;\n"
-                "- при равных условиях преимущество может влиять на порядок зачисления.\n\n"
-                "Лучше смотреть не только слово «льгота», а конкретную категорию: ОВЗ/инвалидность, сироты, СВО, достижения, иностранные документы и так далее."
+                "Льготы и особые права зависят от категории поступающего и правил приёма выбранного колледжа.\n\n"
+                "- первоочередное или преимущественное право применяется только для категорий, указанных в правилах приёма;\n"
+                "- индивидуальные достижения учитываются, если они прямо предусмотрены правилами;\n"
+                "- право подтверждают документами при подаче заявления или по запросу приёмной комиссии;\n"
+                "- при равных условиях подтверждённое преимущество может влиять на порядок зачисления.\n\n"
+                "Для точного ответа нужно смотреть конкретную категорию: ОВЗ/инвалидность, сироты, индивидуальные достижения, иностранные документы или другое основание."
             ),
             "foreigners": (
                 "Иностранные граждане могут поступать в колледжи Москвы, но условия зависят от гражданства, документов и оснований для обучения на бюджете.\n\n"
@@ -1853,7 +2335,7 @@ class ScenarioService:
                 "- результаты ГИА или другой порядок учёта результатов для конкретной категории;\n"
                 "- вступительные испытания, если они есть на специальности;\n"
                 "- подтверждённые льготы, преимущественное право и индивидуальные достижения.\n\n"
-                "Важно: если человек уже получил СПО по программе подготовки специалистов среднего звена, повторное обучение на бюджете может быть недоступно. "
+                "Если человек уже получил СПО по программе подготовки специалистов среднего звена, повторное обучение на бюджете может быть недоступно. "
                 "Для первого СПО бюджет обычно рассматривается по общим правилам конкурса."
             ),
             "rules_2026": (
@@ -1864,16 +2346,17 @@ class ScenarioService:
                 "- приоритеты в заявлении важны: первый приоритет — самый желанный вариант;\n"
                 "- вступительные испытания зависят от специальности;\n"
                 "- льготы и индивидуальные достижения учитываются только при подтверждении.\n\n"
+                f"Атлас профессий с правилами приёма: {ADMISSION_ATLAS_URL}\n\n"
                 "Если нужно, можно разобрать правила по частям: сроки, документы, бюджет, льготы или вступительные испытания."
             ),
             "ovz": (
-                "Для поступающих с ОВЗ или инвалидностью важны не только документы, но и условия обучения.\n\n"
-                "Что обычно проверяют:\n"
-                "- есть ли подтверждающие документы по ОВЗ/инвалидности;\n"
-                "- нужны ли специальные условия при вступительных испытаниях;\n"
-                "- подходит ли выбранная программа по медицинским или организационным ограничениям;\n"
-                "- сможет ли колледж обеспечить нужные условия обучения.\n\n"
-                "В заявлении и документах лучше сразу указывать особые условия, чтобы колледж видел запрос заранее."
+                "Для поступающих с ОВЗ или инвалидностью есть несколько вариантов поддержки.\n\n"
+                "1. Если есть аттестат об основном или среднем общем образовании и поступление идёт на программу СПО, заявление подают через mos.ru.\n\n"
+                "2. Если на выбранной специальности есть вступительные испытания и нужны специальные условия, это указывают в заявлении. К заявлению прикладывают подтверждение: документ об инвалидности, заключение ЦПМПК или ИПРА. Оригиналы документов предоставляют в колледж на этапе прохождения испытаний.\n\n"
+                "3. Колледжи Москвы адаптированы для обучения ребят с особыми образовательными потребностями. Конкретные адаптированные программы, доступная среда и формат сопровождения зависят от колледжа и выбранной профессии.\n\n"
+                "4. Если у поступающего есть свидетельство об обучении, а не аттестат, нужно смотреть программы профессионального обучения. Для этого есть городской проект «Профессиональное обучение без границ»: https://pobg.mcrpo.ru/ovz/\n\n"
+                "5. Для ряда категорий инвалидов и лиц с ОВЗ может действовать преимущественное право при прочих равных условиях конкурса. Основание подтверждают документами.\n\n"
+                "Приёмная комиссия выбранного колледжа подскажет точный перечень документов и доступные условия обучения."
             ),
         }
         answer = answers.get(topic or "")
@@ -1895,26 +2378,28 @@ class ScenarioService:
         )
 
     def render_svo_priority_answer(self, state: dict[str, Any]) -> str:
-        prefix = (
-            "В базе есть информация о первоочередном праве зачисления для отдельных категорий."
-        )
         lines = [
-            prefix,
+            "Первоочередное право зачисления может действовать для отдельных категорий, указанных в правилах приёма и ч. 5.1 ст. 71 Закона об образовании.",
             "",
-            "Кратко:",
-            "первоочередное право может относиться к отдельным участникам СВО, военнослужащим, мобилизованным, добровольцам, некоторым членам их семей, а также другим категориям, указанным в ч. 5.1 ст. 71 Закона об образовании.",
+            "К таким категориям могут относиться:",
+            "- участники СВО, военнослужащие, мобилизованные, добровольцы и контрактники;",
+            "- дети отдельных указанных категорий;",
+            "- вдовы и вдовцы отдельных указанных категорий, если они не вступили в новый брак;",
+            "- другие категории, прямо указанные в правилах приёма.",
             "",
-            "Важно:",
-            "- статус и категорию нужно подтверждать официальными документами",
-            "- точный перечень документов лучше уточнить в приёмной комиссии колледжа",
-            "- правила приёма нужно перепроверить для конкретного года и колледжа",
+            "Для подтверждения готовят документы по своей категории:",
+            "- документ, удостоверяющий личность поступающего;",
+            "- свидетельство о рождении или другой документ, подтверждающий родство;",
+            "- документ, подтверждающий статус или участие: например оригинал справки об участии в СВО или другой официальный документ, который запросит приёмная комиссия.",
+            "",
+            "Точный перечень зависит от основания, поэтому его нужно сверить в приёмной комиссии выбранного колледжа.",
         ]
         if state.get("user_type") == "parent":
             lines.append("")
-            lines.append("По одному сообщению нельзя точно подтвердить, относится ли ваша ситуация к этой категории. Рекомендую уточнить статус и перечень документов в приёмной комиссии выбранного колледжа.")
+            lines.append("По одному сообщению нельзя подтвердить, относится ли ваша ситуация к этой категории.")
         else:
             lines.append("")
-            lines.append("По одному сообщению я не смогу точно сказать, положено ли преимущество именно в твоей ситуации. Лучше проверить это в приёмной комиссии колледжа.")
+            lines.append("По одному сообщению я не смогу точно сказать, положено ли преимущество именно в твоей ситуации.")
         return "\n".join(lines)
 
     def render_olympiad_benefit_answer(self, state: dict[str, Any]) -> str:
@@ -1994,7 +2479,7 @@ class ScenarioService:
             lines.append(display_name)
             brief = self.brief_from_doc(card) if card else ""
             if brief and "Алиасы:" not in brief and "Адреса:" not in brief:
-                lines.append(f"Кратко: {brief}")
+                lines.append(f"Описание: {brief}")
 
             if has_pedagogy:
                 specialty_docs = self.chat_service.get_all_specialty_docs_for_college(db, college)
@@ -2059,7 +2544,7 @@ class ScenarioService:
                     message,
                     answer,
                     "profession",
-                    ["Дизайн и творчество", "Изменить запрос", MAIN_MENU_BUTTON],
+                    ["Креативные индустрии", "Изменить запрос", MAIN_MENU_BUTTON],
                 )
             answer = (
                 "Я не нашёл точные специальности по этой профессии в своей базе. "
@@ -2206,11 +2691,12 @@ class ScenarioService:
             )
 
         lines = [title]
+        show_college = last_results.get("kind") != "industry_specialties"
         for idx, item in enumerate(page, start=offset + 1):
             lines.append("")
             college = str(item.get("college") or "").strip()
             lines.append(f"{idx}. Специальность: {item.get('specialty', '')}")
-            if college:
+            if show_college and college:
                 lines.append(f"   Колледж: {college}")
             lines.append(f"   Почему подходит: {item.get('why') or 'связана с выбранным направлением'}.")
             professions = item.get("professions") or []
@@ -2225,7 +2711,7 @@ class ScenarioService:
         last_results["offset"] = new_offset
         self.session_service.update_route_state(db, session, {"last_results": last_results})
 
-        suggestions = [f"{idx}. Подробнее" for idx in range(offset + 1, offset + len(page) + 1)]
+        suggestions = [f"Специальность {idx}" for idx in range(offset + 1, offset + len(page) + 1)]
         if new_offset < len(items):
             suggestions.append("Показать ещё специальности")
         suggestions.extend(["Изменить запрос", "Выбрать другую отрасль", MAIN_MENU_BUTTON])
@@ -2371,8 +2857,10 @@ class ScenarioService:
             suggestions=self.admission_suggestions(topic),
             top_k=top_k,
             force_mode="admission",
+            append_support_contacts=False,
         )
         answer.answer = self.append_related_admission_topics(answer.answer, topic)
+        answer.answer = self.append_support_contacts(answer.answer, self.session_service.get_route_state(session))
         self.session_service.update_route_state(db, session, {"last_answer": answer.answer})
         return answer
 
@@ -2514,6 +3002,7 @@ class ScenarioService:
         suggestions: list[str],
         top_k: int,
         force_mode: str | None = None,
+        append_support_contacts: bool = True,
     ) -> ScenarioAnswer:
         self.session_service.update_route_state(db, session, route_updates)
         result = self.chat_service.ask(
@@ -2523,7 +3012,10 @@ class ScenarioService:
             session_id=session.session_id,
             top_k=top_k,
         )
-        answer = self.prepare_answer(str(result["answer"]), self.session_service.get_route_state(session))
+        route_state = self.session_service.get_route_state(session)
+        answer = self.prepare_answer(str(result["answer"]), route_state)
+        if append_support_contacts:
+            answer = self.append_support_contacts(answer, route_state)
         self.session_service.update_route_state(db, session, {"last_answer": answer})
         mode = force_mode or str(result.get("dialog_mode", "scenario"))
         route_state = self.session_service.get_route_state(session)
