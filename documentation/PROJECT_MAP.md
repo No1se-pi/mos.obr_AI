@@ -496,9 +496,9 @@ FastAPI-приложение.
 
 Ручки:
 - `GET /api/health`;
-- `POST /api/chat`;
-- `POST /api/session/close`;
-- `POST /api/session/reset`;
+- `POST /ambi/v1/dialog`;
+- `POST /ambi/v1/session/close`;
+- `POST /ambi/v1/session/reset`;
 - `GET /api/demo`;
 - `GET /api/logs/list`;
 - `GET /api/logs/download`.
@@ -545,7 +545,7 @@ Telegram UI.
 
 HTML-демо web-чата.
 
-Использует `/api/chat`.
+Использует `/ambi/v1/dialog`.
 
 Зачем:
 - показать API в браузере;

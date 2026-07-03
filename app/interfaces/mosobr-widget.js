@@ -1,6 +1,6 @@
 (function () {
   const DEFAULT_TITLE = "AI - Амбассадор профессий Амби";
-  const DEFAULT_API = "/api/chat";
+  const DEFAULT_API = "/ambi/v1/dialog";
   const LINK_RE = /((?:https?:\/\/|www\.)[^\s<>"']+|(?:[a-z0-9-]+\.)+(?:ru|com|org|net|edu|gov|рф)(?:\/[^\s<>"']*)?|мос\.ру(?:\/[^\s<>"']*)?)/gi;
   const AMBI_AVATAR_SVG = `
     <svg viewBox="0 0 96 96" aria-hidden="true" focusable="false">
@@ -348,7 +348,21 @@
   }
 
   function sessionEndpoint(apiUrl, name) {
-    return apiUrl.replace(/\/api\/chat$/, `/api/session/${name}`);
+    const raw = String(apiUrl || DEFAULT_API);
+    try {
+      const url = new URL(raw, window.location.href);
+      const path = url.pathname.replace(/\/+$/, "") || "/";
+      if (path === "/api/chat") {
+        url.pathname = `/api/session/${name}`;
+      } else {
+        url.pathname = path.replace(/\/[^/]*$/, `/session/${name}`);
+      }
+      url.search = "";
+      url.hash = "";
+      return url.toString();
+    } catch (_) {
+      return raw.replace(/\/api\/chat$/, `/api/session/${name}`).replace(/\/[^/]*$/, `/session/${name}`);
+    }
   }
 
   function createWidget(options) {

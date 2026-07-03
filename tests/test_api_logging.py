@@ -113,6 +113,85 @@ class ApiLoggingTest(unittest.TestCase):
         self.assertTrue(result["rag_ready"])
         self.assertFalse(result["ollama_ready"])
 
+    def test_public_dialog_path_exists_and_legacy_can_be_disabled(self) -> None:
+        if TestClient is None or api is None:
+            self.skipTest("fastapi is not installed in this environment")
+
+        client = TestClient(api.app)
+        public_response = client.post(api.PUBLIC_CHAT_PATH, json={})
+        self.assertEqual(public_response.status_code, 422)
+
+        payload = {"user_id": "u1", "message": "Привет"}
+        with patch.dict(os.environ, {"API_LEGACY_CHAT_ENABLED": "false"}, clear=False):
+            legacy_response = client.post("/api/chat", json=payload)
+
+        self.assertEqual(legacy_response.status_code, 404)
+
+    def test_rejects_disallowed_origin_before_processing(self) -> None:
+        if TestClient is None or api is None:
+            self.skipTest("fastapi is not installed in this environment")
+
+        api.rate_limit_hits.clear()
+        with patch.dict(os.environ, {"API_CORS_ORIGINS": "https://allowed.example"}, clear=False):
+            response = TestClient(api.app).post(
+                api.PUBLIC_CHAT_PATH,
+                json={},
+                headers={"Origin": "https://evil.example"},
+            )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["detail"], "Origin is not allowed")
+
+    def test_allows_same_origin_without_explicit_cors_entry(self) -> None:
+        if TestClient is None or api is None:
+            self.skipTest("fastapi is not installed in this environment")
+
+        api.rate_limit_hits.clear()
+        with patch.dict(os.environ, {"API_CORS_ORIGINS": "https://allowed.example"}, clear=False):
+            response = TestClient(api.app).post(
+                api.PUBLIC_CHAT_PATH,
+                json={},
+                headers={"Origin": "http://testserver", "Host": "testserver"},
+            )
+
+        self.assertEqual(response.status_code, 422)
+
+    def test_rate_limits_dialog_posts(self) -> None:
+        if TestClient is None or api is None:
+            self.skipTest("fastapi is not installed in this environment")
+
+        api.rate_limit_hits.clear()
+        client = TestClient(api.app)
+        with patch.dict(os.environ, {"API_RATE_LIMIT_PER_MINUTE": "1"}, clear=False):
+            first = client.post(api.PUBLIC_CHAT_PATH, json={})
+            second = client.post(api.PUBLIC_CHAT_PATH, json={})
+
+        self.assertEqual(first.status_code, 422)
+        self.assertEqual(second.status_code, 429)
+
+    def test_rate_limit_does_not_trust_forwarded_for_by_default(self) -> None:
+        if TestClient is None or api is None:
+            self.skipTest("fastapi is not installed in this environment")
+
+        api.rate_limit_hits.clear()
+        client = TestClient(api.app)
+        env = {"API_RATE_LIMIT_PER_MINUTE": "1", "API_TRUST_PROXY_HEADERS": "false"}
+        with patch.dict(os.environ, env, clear=False):
+            first = client.post(api.PUBLIC_CHAT_PATH, json={}, headers={"X-Forwarded-For": "10.0.0.1"})
+            second = client.post(api.PUBLIC_CHAT_PATH, json={}, headers={"X-Forwarded-For": "10.0.0.2"})
+
+        self.assertEqual(first.status_code, 422)
+        self.assertEqual(second.status_code, 429)
+
+    def test_rejects_oversized_body(self) -> None:
+        if TestClient is None or api is None:
+            self.skipTest("fastapi is not installed in this environment")
+
+        with patch.object(api, "MAX_BODY_BYTES", 32):
+            response = TestClient(api.app).post(api.PUBLIC_CHAT_PATH, json={"user_id": "u1", "message": "x" * 100})
+
+        self.assertEqual(response.status_code, 413)
+
 
 if __name__ == "__main__":
     unittest.main()

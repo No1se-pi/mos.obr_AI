@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import defaultdict, deque
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -11,9 +13,9 @@ import zipfile
 from typing import Any, Optional
 
 import requests
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select, text
 
@@ -35,10 +37,116 @@ DEMO_HTML_PATH = Path(__file__).with_name("demo_chat.html")
 WIDGET_JS_PATH = Path(__file__).with_name("mosobr-widget.js")
 LOGS_DIR = Path(os.getenv("LOGS_DIR", "/app/logs"))
 API_WAIT_FOR_DOCUMENTS = os.getenv("API_WAIT_FOR_DOCUMENTS", "1").strip().lower() not in {"0", "false", "no", "off"}
-OLLAMA_HEALTH_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_HEALTH_TIMEOUT_SECONDS", "2"))
+PUBLIC_CHAT_PATH = os.getenv("PUBLIC_CHAT_PATH", "/ambi/v1/dialog").strip() or "/ambi/v1/dialog"
+LEGACY_CHAT_PATH = "/api/chat"
+LEGACY_SESSION_CLOSE_PATH = "/api/session/close"
+LEGACY_SESSION_RESET_PATH = "/api/session/reset"
+RATE_LIMIT_WINDOW_SECONDS = 60.0
 
 TRUE_VALUES = {"1", "true", "yes", "on"}
 FALSE_VALUES = {"0", "false", "no", "off"}
+
+
+def int_env(name: str, default: int, *, minimum: int = 0) -> int:
+    raw = os.getenv(name, str(default)).strip()
+    try:
+        return max(minimum, int(raw))
+    except ValueError:
+        return default
+
+
+OLLAMA_HEALTH_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_HEALTH_TIMEOUT_SECONDS", "2"))
+MAX_USER_ID_LENGTH = int_env("API_MAX_USER_ID_CHARS", 128, minimum=1)
+MAX_SESSION_ID_LENGTH = int_env("API_MAX_SESSION_ID_CHARS", 128, minimum=1)
+MAX_MESSAGE_LENGTH = int_env("API_MAX_MESSAGE_CHARS", 4000, minimum=1)
+MAX_ACTION_LENGTH = int_env("API_MAX_ACTION_CHARS", 128, minimum=1)
+MAX_BODY_BYTES = int_env("API_MAX_BODY_BYTES", 16384, minimum=1024)
+
+
+def normalize_api_path(path: str) -> str:
+    cleaned = (path or "").strip()
+    if not cleaned.startswith("/"):
+        cleaned = "/" + cleaned
+    return cleaned.rstrip("/") or "/"
+
+
+def sibling_session_path(chat_path: str, name: str) -> str:
+    base = normalize_api_path(chat_path)
+    parent = base.rsplit("/", 1)[0] if "/" in base.strip("/") else ""
+    return normalize_api_path(f"{parent}/session/{name}")
+
+
+PUBLIC_CHAT_PATH = normalize_api_path(PUBLIC_CHAT_PATH)
+PUBLIC_SESSION_CLOSE_PATH = normalize_api_path(
+    os.getenv("PUBLIC_SESSION_CLOSE_PATH", sibling_session_path(PUBLIC_CHAT_PATH, "close"))
+)
+PUBLIC_SESSION_RESET_PATH = normalize_api_path(
+    os.getenv("PUBLIC_SESSION_RESET_PATH", sibling_session_path(PUBLIC_CHAT_PATH, "reset"))
+)
+
+
+def csv_env(name: str, default: list[str]) -> list[str]:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    values = [item.strip().rstrip("/") for item in raw.split(",") if item.strip()]
+    return values or default
+
+
+def allowed_cors_origins() -> list[str]:
+    return csv_env(
+        "API_CORS_ORIGINS",
+        [
+            "http://localhost",
+            "http://localhost:8000",
+            "http://127.0.0.1",
+            "http://127.0.0.1:8000",
+        ],
+    )
+
+
+def api_legacy_chat_enabled() -> bool:
+    return env_flag("API_LEGACY_CHAT_ENABLED", default=True)
+
+
+def api_trust_proxy_headers() -> bool:
+    return env_flag("API_TRUST_PROXY_HEADERS", default=False)
+
+
+def rate_limit_per_minute() -> int:
+    return int_env("API_RATE_LIMIT_PER_MINUTE", 120, minimum=0)
+
+
+def request_origin(request: Request) -> str:
+    if api_trust_proxy_headers():
+        scheme = request.headers.get("x-forwarded-proto", request.url.scheme).split(",", 1)[0].strip()
+        host = request.headers.get("x-forwarded-host") or request.headers.get("host") or ""
+    else:
+        scheme = request.url.scheme
+        host = request.headers.get("host") or ""
+    return f"{scheme}://{host}".rstrip("/")
+
+
+def is_origin_allowed(request: Request) -> bool:
+    origin = request.headers.get("origin")
+    if not origin:
+        return True
+    if origin.rstrip("/") == request_origin(request):
+        return True
+    allowed = allowed_cors_origins()
+    if "*" in allowed:
+        return True
+    return origin.rstrip("/") in allowed
+
+
+def client_ip(request: Request) -> str:
+    forwarded_for = request.headers.get("x-forwarded-for", "") if api_trust_proxy_headers() else ""
+    if forwarded_for:
+        return forwarded_for.split(",", 1)[0].strip()
+    if request.client:
+        return request.client.host
+    return "unknown"
+
 
 app = FastAPI(
     title="MosObr AI API",
@@ -48,11 +156,72 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=allowed_cors_origins(),
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+rate_limit_hits: dict[tuple[str, str], deque[float]] = defaultdict(deque)
+
+
+def should_rate_limit(request: Request) -> bool:
+    if request.method.upper() != "POST":
+        return False
+    path = request.url.path.rstrip("/") or "/"
+    return path in {
+        PUBLIC_CHAT_PATH,
+        LEGACY_CHAT_PATH,
+        PUBLIC_SESSION_CLOSE_PATH,
+        LEGACY_SESSION_CLOSE_PATH,
+        PUBLIC_SESSION_RESET_PATH,
+        LEGACY_SESSION_RESET_PATH,
+    }
+
+
+def rate_limited(request: Request) -> bool:
+    limit = rate_limit_per_minute()
+    if limit <= 0 or not should_rate_limit(request):
+        return False
+
+    now = time.monotonic()
+    key = (client_ip(request), request.url.path.rstrip("/") or "/")
+    bucket = rate_limit_hits[key]
+    while bucket and now - bucket[0] > RATE_LIMIT_WINDOW_SECONDS:
+        bucket.popleft()
+    if len(bucket) >= limit:
+        return True
+    bucket.append(now)
+
+    # Небольшая уборка, чтобы словарь не рос бесконечно от одноразовых IP.
+    stale_keys = [item_key for item_key, hits in rate_limit_hits.items() if not hits or now - hits[-1] > RATE_LIMIT_WINDOW_SECONDS]
+    for item_key in stale_keys[:200]:
+        rate_limit_hits.pop(item_key, None)
+    return False
+
+
+@app.middleware("http")
+async def security_middleware(request: Request, call_next: Callable[[Request], Any]) -> Response:
+    if not is_origin_allowed(request):
+        return JSONResponse(status_code=403, content={"detail": "Origin is not allowed"})
+
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            if int(content_length) > MAX_BODY_BYTES:
+                return JSONResponse(status_code=413, content={"detail": "Request body is too large"})
+        except ValueError:
+            return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length"})
+
+    if rate_limited(request):
+        return JSONResponse(status_code=429, content={"detail": "Too many requests"})
+
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+    return response
 
 
 @app.on_event("startup")
@@ -184,6 +353,11 @@ def require_logs_access(authorization: str | None = Header(default=None)) -> Non
         raise HTTPException(status_code=403, detail="Invalid API logs token")
 
 
+def require_legacy_path_if_needed(path: str) -> None:
+    if path.rstrip("/") in {LEGACY_CHAT_PATH, LEGACY_SESSION_CLOSE_PATH, LEGACY_SESSION_RESET_PATH} and not api_legacy_chat_enabled():
+        raise HTTPException(status_code=404, detail="Not found")
+
+
 @dataclass(slots=True)
 class ApiSessionState:
     session_id: str | None
@@ -266,12 +440,12 @@ def get_effective_session_id(user_id: str, incoming_session_id: str | None) -> t
 
 
 class ChatRequest(BaseModel):
-    user_id: str = Field(..., min_length=1, description="ID пользователя на сайте")
-    message: str = Field(..., min_length=1, description="Сообщение пользователя")
-    session_id: Optional[str] = Field(None, description="ID сессии, если уже есть")
-    route: Optional[str] = Field(None, description="Сценарный маршрут: college, profession, admission, custom")
-    action: Optional[str] = Field(None, description="Сценарное действие или код нажатой кнопки")
-    user_type: Optional[str] = Field(None, description="Тип пользователя: parent или applicant")
+    user_id: str = Field(..., min_length=1, max_length=MAX_USER_ID_LENGTH, description="ID пользователя на сайте")
+    message: str = Field(..., min_length=1, max_length=MAX_MESSAGE_LENGTH, description="Сообщение пользователя")
+    session_id: Optional[str] = Field(None, max_length=MAX_SESSION_ID_LENGTH, description="ID сессии, если уже есть")
+    route: Optional[str] = Field(None, max_length=MAX_ACTION_LENGTH, description="Сценарный маршрут: college, profession, admission, custom")
+    action: Optional[str] = Field(None, max_length=MAX_ACTION_LENGTH, description="Сценарное действие или код нажатой кнопки")
+    user_type: Optional[str] = Field(None, max_length=32, description="Тип пользователя: parent или applicant")
 
 
 class SuggestionItem(BaseModel):
@@ -291,8 +465,8 @@ class ChatResponse(BaseModel):
 
 
 class SessionRequest(BaseModel):
-    user_id: str = Field(..., min_length=1)
-    session_id: Optional[str] = None
+    user_id: str = Field(..., min_length=1, max_length=MAX_USER_ID_LENGTH)
+    session_id: Optional[str] = Field(None, max_length=MAX_SESSION_ID_LENGTH)
 
 
 class SessionResponse(BaseModel):
@@ -328,6 +502,11 @@ def health() -> dict[str, str | int | bool]:
         "web_logs_dir_exists": int((LOGS_DIR / "web_sessions").exists()),
         "api_logs_enabled": api_logs_enabled(),
         "api_logs_token_required": bool(api_logs_token()),
+        "public_chat_path": PUBLIC_CHAT_PATH,
+        "legacy_chat_enabled": api_legacy_chat_enabled(),
+        "cors_restricted": "*" not in allowed_cors_origins(),
+        "trust_proxy_headers": api_trust_proxy_headers(),
+        "rate_limit_per_minute": rate_limit_per_minute(),
         "documents_total": counts["total"],
         "documents_faq": counts["faq"],
         "documents_college": counts["college"],
@@ -335,15 +514,19 @@ def health() -> dict[str, str | int | bool]:
     }
 
 
-@app.post("/api/chat", response_model=ChatResponse)
-def chat(request: ChatRequest) -> ChatResponse:
+@app.post(LEGACY_CHAT_PATH, response_model=ChatResponse, include_in_schema=False)
+def chat(request: ChatRequest, http_request: Request) -> ChatResponse:
+    require_legacy_path_if_needed(http_request.url.path)
     user_id = request.user_id.strip()
     message = request.message.strip()
+    if not user_id or not message:
+        raise HTTPException(status_code=422, detail="user_id and message must not be blank")
 
     session_id, expired = get_effective_session_id(user_id, request.session_id)
 
     logger.info(
-        "[API] /api/chat user_id=%s session_id=%s expired=%s message=%r",
+        "[API] %s user_id=%s session_id=%s expired=%s message=%r",
+        http_request.url.path,
         user_id,
         session_id,
         expired,
@@ -420,9 +603,12 @@ def chat(request: ChatRequest) -> ChatResponse:
     )
 
 
-@app.post("/api/session/close", response_model=SessionResponse)
-def close_session(request: SessionRequest) -> SessionResponse:
+@app.post(LEGACY_SESSION_CLOSE_PATH, response_model=SessionResponse, include_in_schema=False)
+def close_session(request: SessionRequest, http_request: Request) -> SessionResponse:
+    require_legacy_path_if_needed(http_request.url.path)
     user_id = request.user_id.strip()
+    if not user_id:
+        raise HTTPException(status_code=422, detail="user_id must not be blank")
     session_id = request.session_id or (site_sessions.get(user_id).session_id if site_sessions.get(user_id) else None)
     site_sessions.pop(user_id, None)
     append_web_event(
@@ -435,9 +621,12 @@ def close_session(request: SessionRequest) -> SessionResponse:
     return SessionResponse(ok=True, message="Сессия закрыта")
 
 
-@app.post("/api/session/reset", response_model=SessionResponse)
-def reset_session(request: SessionRequest) -> SessionResponse:
+@app.post(LEGACY_SESSION_RESET_PATH, response_model=SessionResponse, include_in_schema=False)
+def reset_session(request: SessionRequest, http_request: Request) -> SessionResponse:
+    require_legacy_path_if_needed(http_request.url.path)
     user_id = request.user_id.strip()
+    if not user_id:
+        raise HTTPException(status_code=422, detail="user_id must not be blank")
     session_id = site_sessions.get(user_id).session_id if site_sessions.get(user_id) else request.session_id
     site_sessions.pop(user_id, None)
     append_web_event(
@@ -448,6 +637,14 @@ def reset_session(request: SessionRequest) -> SessionResponse:
         mode="session_reset",
     )
     return SessionResponse(ok=True, message="Новая сессия будет создана при следующем сообщении")
+
+
+if PUBLIC_CHAT_PATH != LEGACY_CHAT_PATH:
+    app.add_api_route(PUBLIC_CHAT_PATH, chat, methods=["POST"], response_model=ChatResponse)
+if PUBLIC_SESSION_CLOSE_PATH != LEGACY_SESSION_CLOSE_PATH:
+    app.add_api_route(PUBLIC_SESSION_CLOSE_PATH, close_session, methods=["POST"], response_model=SessionResponse)
+if PUBLIC_SESSION_RESET_PATH != LEGACY_SESSION_RESET_PATH:
+    app.add_api_route(PUBLIC_SESSION_RESET_PATH, reset_session, methods=["POST"], response_model=SessionResponse)
 
 
 @app.get("/api/demo", response_class=HTMLResponse)

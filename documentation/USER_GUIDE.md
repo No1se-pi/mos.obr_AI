@@ -22,7 +22,7 @@
 http://localhost:8000/api/demo
 ```
 
-Web-демо использует тот же `/api/chat`, что и внешний сайт.
+Web-демо использует тот же публичный endpoint `/ambi/v1/dialog`, что и внешний сайт.
 
 На странице открывается чат-виджет в правом нижнем углу. Первый экран показывает приветствие Амби и те же 4 маршрута, что и Telegram.
 Кнопки в web-демо используют те же `label/action`, что и Telegram и API.
@@ -36,7 +36,7 @@ Web-демо использует тот же `/api/chat`, что и внешн�
 
 <script>
   MosobrWidget.init({
-    apiUrl: "http://localhost:8000/api/chat",
+    apiUrl: "http://localhost:8000/ambi/v1/dialog",
     title: "AI - Амбассадор профессий Амби"
   });
 </script>

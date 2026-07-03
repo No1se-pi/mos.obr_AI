@@ -124,11 +124,13 @@ http://localhost:8000/api/demo
 
 <script>
   MosobrWidget.init({
-    apiUrl: "http://localhost:8000/api/chat",
+    apiUrl: "http://localhost:8000/ambi/v1/dialog",
     title: "AI - Амбассадор профессий Амби"
   });
 </script>
 ```
+
+Для продакшена лучше задать `API_CORS_ORIGINS=https://домен-сайта.ru` и использовать публичный путь `PUBLIC_CHAT_PATH=/ambi/v1/dialog`. Старый `/api/chat` оставлен для совместимости и может быть выключен через `API_LEGACY_CHAT_ENABLED=false`. Если API стоит за nginx/Traefik, включайте `API_TRUST_PROXY_HEADERS=true` только когда proxy сам выставляет `X-Forwarded-*`.
 
 ## Основные Команды
 

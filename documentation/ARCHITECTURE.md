@@ -20,11 +20,11 @@
 `app/interfaces/api.py`
 
 FastAPI-приложение:
-- `/api/chat`;
+- `/ambi/v1/dialog` - основной публичный endpoint диалога;
 - `/api/health`;
 - `/api/demo`;
-- `/api/session/close`;
-- `/api/session/reset`;
+- `/ambi/v1/session/close`;
+- `/ambi/v1/session/reset`;
 - защищенные `/api/logs/list` и `/api/logs/download`.
 
 `app/interfaces/telegram_bot.py`
@@ -134,7 +134,7 @@ Telegram:
 - есть кнопка `Завершить сессию`.
 
 HTTP API:
-- `/api/chat` принимает старый формат `user_id/message/session_id`;
+- `/ambi/v1/dialog` принимает формат `user_id/message/session_id`; старый `/api/chat` оставлен как отключаемый legacy-алиас;
 - дополнительно поддерживает `route`, `action`, `user_type`;
 - возвращает `route`, `step`, `suggestions` как `{label, action}` и `suggestion_labels` для совместимости.
 

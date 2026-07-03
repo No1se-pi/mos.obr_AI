@@ -161,7 +161,7 @@
 
 &lt;script&gt;
   MosobrWidget.init({
-    apiUrl: "http://localhost:8000/api/chat",
+    apiUrl: "http://localhost:8000/ambi/v1/dialog",
     title: "AI - Амбассадор профессий Амби"
   });
 &lt;/script&gt;</pre>
@@ -172,7 +172,7 @@
   <script src="/static/mosobr-widget.js"></script>
   <script>
     const widget = MosobrWidget.init({
-      apiUrl: window.location.origin + "/api/chat",
+      apiUrl: window.location.origin + "/ambi/v1/dialog",
       title: "AI - Амбассадор профессий Амби"
     });
     widget.open();
